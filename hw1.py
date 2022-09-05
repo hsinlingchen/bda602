@@ -3,9 +3,11 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def main():
@@ -22,11 +24,22 @@ def main():
     print("Min:\n{}".format(stat_min))
     stat_max = stat.max()
     print("Max:\n{}".format(stat_max))
-    q_25 = np.quantile(stat, 0.25)
-    q_50 = np.quantile(stat, 0.5)
-    q_75 = np.quantile(stat, 0.75)
-    print("Quantiles:\n0.25 = {}\n0.50 = {}\n0.75 = {}".format(q_25, q_50, q_75))
-
+    q_sl_25 = np.quantile(stat["sepal length"], 0.25)
+    q_sl_50 = np.quantile(stat["sepal length"], 0.5)
+    q_sl_75 = np.quantile(stat["sepal length"], 0.75)
+    print("Quartiles of Sepal Length:\n0.25 = {}\n0.50 = {}\n0.75 = {}".format(q_sl_25, q_sl_50, q_sl_75))
+    q_sw_25 = np.quantile(stat["sepal width"], 0.25)
+    q_sw_50 = np.quantile(stat["sepal width"], 0.5)
+    q_sw_75 = np.quantile(stat["sepal width"], 0.75)
+    print("Quartiles of Sepal Width:\n0.25 = {}\n0.50 = {}\n0.75 = {}".format(q_sw_25, q_sw_50, q_sw_75))
+    q_pl_25 = np.quantile(stat["petal length"], 0.25)
+    q_pl_50 = np.quantile(stat["petal length"], 0.5)
+    q_pl_75 = np.quantile(stat["petal length"], 0.75)
+    print("Quartiles of Petal Length:\n0.25 = {}\n0.50 = {}\n0.75 = {}".format(q_pl_25, q_pl_50, q_pl_75))
+    q_pw_25 = np.quantile(stat["petal width"], 0.25)
+    q_pw_50 = np.quantile(stat["petal width"], 0.5)
+    q_pw_75 = np.quantile(stat["petal width"], 0.75)
+    print("Quartiles of Petal Width:\n0.25 = {}\n0.50 = {}\n0.75 = {}".format(q_pw_25, q_pw_50, q_pw_75))
 
     #plots
     #scatter plots for sepal length and width
@@ -47,47 +60,54 @@ def main():
 
 
     #Analyze and build models
-    # Increase pandas print viewport (so we see more on the screen)
-    pd.set_option("display.max_rows", 10)
-    pd.set_option("display.max_columns", 500)
-    pd.set_option("display.width", 1_000)
-
     # DataFrame to numpy values
-    X_orig = iris.iloc[:, 0:4]
+    X_orig = iris.iloc[:, 0:4].values
     y = iris["class"].values
 
-    # Let's generate a feature from the where they started
-    one_hot_encoder = OneHotEncoder()
-    one_hot_encoder.fit(X_orig)
-    X = one_hot_encoder.transform(X_orig)
-
-    # Fit the features to a random forest
-    random_forest = RandomForestClassifier(random_state=1234)
-    random_forest.fit(X, y)
-
-
-    prediction = random_forest.predict(X)
-    probability = random_forest.predict_proba(X)
-
-    print("Model Predictions")
-    print(f"Classes: {random_forest.classes_}")
-    print(f"Probability: {probability}")
-    print(f"Predictions: {prediction}")
-
     # As pipeline
-    print("Model via Pipeline Predictions")
-    pipeline = Pipeline(
+    # Random Forest
+    print("Model via Random Forest Predictions")
+    pipeline_rf = Pipeline(
         [
-            ("OneHotEncode", OneHotEncoder()),
+            ("StandardScaler", StandardScaler()),
             ("RandomForest", RandomForestClassifier(random_state=1234)),
         ]
     )
-    pipeline.fit(X_orig, y)
+    pipeline_rf.fit(X_orig, y)
 
-    probability = pipeline.predict_proba(X_orig)
-    prediction = pipeline.predict(X_orig)
-    print(f"Probability: {probability}")
-    print(f"Predictions: {prediction}")
+    prob_rf = pipeline_rf.predict_proba(X_orig)
+    pred_rf = pipeline_rf.predict(X_orig)
+    print(f"Probability: {prob_rf}")
+    print(f"Predictions: {pred_rf}")
+    # Decision Tree
+    print("Model via Decision Tree Predictions")
+    pipeline_dt = Pipeline(
+        [
+            ("StandardScaler", StandardScaler()),
+            ("DecisionTree", DecisionTreeClassifier(random_state=1234)),
+        ]
+    )
+    pipeline_dt.fit(X_orig, y)
+
+    prob_dt = pipeline_dt.predict_proba(X_orig)
+    pred_dt = pipeline_dt.predict(X_orig)
+    print(f"Probability: {prob_dt}")
+    print(f"Predictions: {pred_dt}")
+    # K Neighbors
+    print("Model via K Neighbors Predictions")
+    pipeline_kn = Pipeline(
+        [
+            ("StandardScaler", StandardScaler()),
+            ("KNeighbors", KNeighborsClassifier(n_neighbors=5)),
+        ]
+    )
+    pipeline_kn.fit(X_orig, y)
+
+    prob_kn = pipeline_kn.predict_proba(X_orig)
+    pred_kn = pipeline_kn.predict(X_orig)
+    print(f"Probability: {prob_kn}")
+    print(f"Predictions: {pred_kn}")
+
     return
 
 
