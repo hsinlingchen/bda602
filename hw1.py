@@ -4,7 +4,6 @@ import numpy as np
 import plotly.express as px
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -107,7 +106,6 @@ def main():
     pred_kn = pipeline_kn.predict(X_orig)
     print(f"Probability: {prob_kn}")
     print(f"Predictions: {pred_kn}")
-
     return
 
 
