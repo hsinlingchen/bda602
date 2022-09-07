@@ -20,3 +20,7 @@
 # Run `pre-commit` locally.
 
 `pre-commit run --all-files`
+
+# Assignments
+
+- Assignment 1 located in 'src' file with the name of 'hw1.py'
