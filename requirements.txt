@@ -6,3 +6,7 @@
 #
 numpy==1.23.2
     # via -r requirements.in
+plotly==5.10.0
+    # via -r requirements.in
+tenacity==8.0.1
+    # via plotly
