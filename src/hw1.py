@@ -19,7 +19,7 @@ def main():
         "petal width (cm)",
         "class",
     ]
-    iris = pd.read_csv("./src/iris.data", names=iris_names)
+    iris = pd.read_csv("../src/iris.data", names=iris_names)
 
     # simple summary statistics
     stat = iris.iloc[:, 0:4]
