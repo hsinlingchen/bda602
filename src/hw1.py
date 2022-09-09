@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 def main():
     # Load iris data into DataFrame using pandas
     iris_names = ["sepal length", "sepal width", "petal length", "petal width", "class"]
-    iris = pd.read_csv("https://teaching.mrsharky.com/data/iris.data", names=iris_names)
+    iris = pd.read_csv("../src/iris.data", names=iris_names)
 
     # simple summary statistics
     stat = iris.iloc[:, 0:4]
