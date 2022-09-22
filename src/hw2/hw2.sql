@@ -29,14 +29,14 @@ WHERE atBat > 0
 GROUP BY batter
 ORDER BY batter;
 
--- Rolling (over last 100 days)
-DROP TABLE IF EXISTS rolling_100;
+
+-- Intermediary table for rolling over the past 100 days
+DROP TABLE IF EXISTS int_rolling_100;
 
 -- Look at the last 100 days that player was in prior to this game
 -- Rolling: 100 days prior without the day of the game
 -- Using 'DATE_SUB' to get the date of 100 day prior to the game local date
--- Keeping the 'NULL' batting average records so the players know there was no previous game prior to the day
-CREATE TABLE rolling_100
+CREATE TABLE int_rolling_100
 SELECT B.batter, G.game_id, DATE(G.local_date) AS day_of_game, DATE(DATE_SUB(G.local_date, INTERVAL 100 DAY)) AS day_100_prior
        ,(SELECT ROUND(SUM(BC.Hit)/(SUM(BC.atBat)),3)
          FROM batter_counts BC
@@ -44,7 +44,7 @@ SELECT B.batter, G.game_id, DATE(G.local_date) AS day_of_game, DATE(DATE_SUB(G.l
          ON BC.game_id = Ga.game_id
          WHERE BC.atBat > 0 AND (Ga.local_date BETWEEN DATE_SUB(G.local_date, INTERVAL 100 DAY) AND DATE_SUB(G.local_date, INTERVAL 1 DAY))
          AND (BC.batter=B.batter)
-         GROUP BY BC.batter) AS Rolling_100_Avg
+         GROUP BY BC.batter) AS rolling_100
 FROM batter_counts B
 JOIN game G
 ON B.game_id = G.game_id
@@ -52,5 +52,8 @@ GROUP BY B.batter, G.game_id
 ORDER BY B.batter, G.game_id;
 
 
-
-
+-- Final rolling tabl (over last 100 days) without 'NULL' values
+CREATE TABLE rolling_100_avg
+SELECT batter, game_id, day_of_game, day_100_prior, rolling_100
+FROM int_rolling_100
+WHERE rolling_100 IS NOT NULL;
