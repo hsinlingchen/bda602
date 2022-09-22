@@ -18,7 +18,7 @@ GROUP BY B.batter, Game_Year
 ORDER BY B.batter, Game_Year;
 
 -- Historical
-DROP TABLE IF EXISTS Historical_Batting_Avg;
+DROP TABLE IF EXISTS hist_bat_avg;
 
 CREATE TABLE hist_bat_avg
 SELECT batter, ROUND(SUM(Hit)/NULLIF(SUM(atBat),0),3) AS Historical_Batting_Avg
