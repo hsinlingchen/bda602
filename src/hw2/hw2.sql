@@ -51,8 +51,11 @@ ON B.game_id = G.game_id
 GROUP BY B.batter, G.game_id
 ORDER BY B.batter, G.game_id;
 
+CREATE INDEX rolling_index ON int_rolling_100(batter, day_of_game);
 
--- Final rolling tabl (over last 100 days) without 'NULL' values
+-- Final rolling table (over last 100 days) without 'NULL' values
+DROP TABLE IF EXISTS rolling_100_avg;
+
 CREATE TABLE rolling_100_avg
 SELECT batter, game_id, day_of_game, day_100_prior, rolling_100
 FROM int_rolling_100
