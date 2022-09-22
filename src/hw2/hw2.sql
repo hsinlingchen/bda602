@@ -7,7 +7,7 @@ ALTER TABLE inning MODIFY COLUMN game_id INT UNSIGNED NOT NULL;
 
 -- Calculate the batting average using SQL queries for every player
 -- Annual
-DROP TABLE IF IT EXISTS annual_bat_avg;
+DROP TABLE IF EXISTS annual_bat_avg;
 -- NULLIF(SUM(atBAt),0) to avoid division by zero error
 CREATE TABLE annual_bat_avg
 SELECT B.batter, YEAR(G.local_date) AS Game_Year, ROUND(SUM(B.Hit)/NULLIF(SUM(B.atBat),0),3) AS Annual_Batting_Avg
@@ -18,7 +18,7 @@ GROUP BY B.batter, Game_Year
 ORDER BY B.batter, Game_Year;
 
 -- Historical
-DROP TABLE IF IT EXISTS Historical_Batting_Avg;
+DROP TABLE IF EXISTS Historical_Batting_Avg;
 
 CREATE TABLE hist_bat_avg
 SELECT batter, ROUND(SUM(Hit)/NULLIF(SUM(atBat),0),3) AS Historical_Batting_Avg
@@ -27,7 +27,7 @@ GROUP BY batter
 ORDER BY batter;
 
 -- Rolling (over last 100 days)
-DROP TABLE IF IT EXISTS rolling_100;
+DROP TABLE IF EXISTS rolling_100;
 
 -- Look at the last 100 days that player was in prior to this game
 -- Rolling: 100 days prior without the day of the game
