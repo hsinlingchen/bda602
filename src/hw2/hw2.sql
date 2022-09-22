@@ -34,8 +34,8 @@ DROP TABLE IF EXISTS rolling_100;
 
 -- Look at the last 100 days that player was in prior to this game
 -- Rolling: 100 days prior without the day of the game
--- USING 'DATE_SUB' to get the date of 100 day prior to the game local date
--- BETWEEN includes both begin and end days
+-- Using 'DATE_SUB' to get the date of 100 day prior to the game local date
+-- Keeping the 'NULL' batting average records so the players know there was no previous game prior to the day
 CREATE TABLE rolling_100
 SELECT B.batter, G.game_id, DATE(G.local_date) AS day_of_game, DATE(DATE_SUB(G.local_date, INTERVAL 100 DAY)) AS day_100_prior
        ,(SELECT ROUND(SUM(BC.Hit)/(SUM(BC.atBat)),3)
