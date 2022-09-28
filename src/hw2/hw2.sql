@@ -30,33 +30,50 @@ GROUP BY batter
 ORDER BY batter;
 
 
--- Intermediary table for rolling over the past 100 days
-DROP TABLE IF EXISTS int_rolling_100;
+-- Intermediary table batter_game
+DROP TABLE IF EXISTS batter_game;
+
+CREATE TABLE batter_game
+SELECT b.batter
+       , g.game_id
+       , DATE(g.local_date) AS local_date
+       , b.Hit, b.atBat
+FROM batter_counts b
+JOIN game g
+ON b.game_id = g.game_id
+ORDER BY b.batter;
+
+CREATE INDEX bg_index_batter
+ON batter_game (batter);
+
+CREATE INDEX bg_index_game_id
+ON batter_game (game_id);
 
 -- Look at the last 100 days that player was in prior to this game
 -- Rolling: 100 days prior without the day of the game
 -- Using 'DATE_SUB' to get the date of 100 day prior to the game local date
-CREATE TABLE int_rolling_100
-SELECT B.batter, G.game_id, DATE(G.local_date) AS day_of_game, DATE(DATE_SUB(G.local_date, INTERVAL 100 DAY)) AS day_100_prior
-       ,(SELECT ROUND(SUM(BC.Hit)/(SUM(BC.atBat)),3)
-         FROM batter_counts BC
-         JOIN game Ga
-         ON BC.game_id = Ga.game_id
-         WHERE BC.atBat > 0 AND (Ga.local_date BETWEEN DATE_SUB(G.local_date, INTERVAL 100 DAY) AND DATE_SUB(G.local_date, INTERVAL 1 DAY))
-         AND (BC.batter=B.batter)
-         GROUP BY BC.batter) AS rolling_100
-FROM batter_counts B
-JOIN game G
-ON B.game_id = G.game_id
-GROUP BY B.batter, G.game_id
-ORDER BY B.batter, G.game_id;
+DROP TABLE IF EXISTS diff_100_stats;
 
-CREATE INDEX rolling_index ON int_rolling_100(batter, day_of_game);
+CREATE TABLE diff_100_stats
+SELECT b1.batter
+       , DATE(b1.local_date) AS local_date
+       , SUM(b2.Hit)/NULLIF(SUM(b2.atBat),0) AS roll_100_stat
+FROM batter_game b1
+JOIN batter_game b2
+ON b1.batter = b2.batter
+AND b2.local_date BETWEEN DATE_SUB(b1.local_date, INTERVAL 100 DAY) AND DATE_SUB(b1.local_date, INTERVAL 1 DAY)
+WHERE b2.atBat > 0
+GROUP BY b1.batter, b1.local_date;
 
--- Final rolling table (over last 100 days) without 'NULL' values
-DROP TABLE IF EXISTS rolling_100_avg;
+CREATE INDEX rolling_index ON diff_100_stats(batter, local_date);
 
-CREATE TABLE rolling_100_avg
-SELECT batter, game_id, day_of_game, day_100_prior, rolling_100
-FROM int_rolling_100
-WHERE rolling_100 IS NOT NULL;
+-- Final rolling table
+DROP TABLE IF EXISTS avg_100_stats;
+
+CREATE TABLE avg_100_stats
+SELECT b.batter, b.game_id, d.roll_100_stat
+FROM batter_game b
+JOIN diff_100_stats d
+ON b.batter = d.batter
+AND DATE(b.local_date) = d.local_date
+GROUP BY b.batter, b.game_id;
