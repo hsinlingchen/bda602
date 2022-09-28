@@ -11,7 +11,7 @@ ALTER TABLE inning MODIFY COLUMN game_id INT UNSIGNED NOT NULL;
 DROP TABLE IF EXISTS annual_bat_avg;
 
 CREATE TABLE annual_bat_avg
-SELECT B.batter, YEAR(G.local_date) AS Game_Year, ROUND(SUM(B.Hit)/(SUM(B.atBat)),3) AS Annual_Batting_Avg
+SELECT B.batter, YEAR(G.local_date) AS Game_Year, SUM(B.Hit)/(SUM(B.atBat)) AS Annual_Batting_Avg
 FROM batter_counts B
 JOIN game G
 ON B.game_id = G.game_id
@@ -23,7 +23,7 @@ ORDER BY B.batter, Game_Year;
 DROP TABLE IF EXISTS hist_bat_avg;
 
 CREATE TABLE hist_bat_avg
-SELECT batter, ROUND(SUM(Hit)/(SUM(atBat)),3) AS Historical_Batting_Avg
+SELECT batter, SUM(Hit)/(SUM(atBat)) AS Historical_Batting_Avg
 FROM batter_counts
 WHERE atBat > 0
 GROUP BY batter
