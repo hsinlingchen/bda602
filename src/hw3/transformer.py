@@ -5,14 +5,13 @@ from pyspark.sql import SparkSession
 rolling_sql = """SELECT bg1.batter
                      , bg1.game_id
                      , bg1.local_date
-                     , SUM(bg2.Hit)/SUM(bg2.atBat) AS rolling_ba
+                     , SUM(bg2.Hit)/NULLIF(SUM(bg2.atBat),0) AS rolling_ba
                      FROM batter_game bg1
                      JOIN batter_game bg2
                      ON bg1.batter = bg2.batter
                      AND bg2.local_date
                      BETWEEN DATE_SUB(bg1.local_date, 100)
                      AND DATE_SUB(bg1.local_date, 1)
-                     WHERE bg2.atBat > 0
                      GROUP BY bg1.batter, bg1.game_id, bg1.local_date
                      ORDER BY bg1.batter, bg1.game_id ASC
                 """

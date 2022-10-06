@@ -22,8 +22,7 @@ bg_query = """SELECT bc.batter
                      ,bc.Hit
                 FROM batter_counts bc
                 JOIN game g
-                ON bc.game_id = g.game_id
-                ORDER BY bc.batter, bc.game_id ASC"""
+                ON bc.game_id = g.game_id"""
 
 df_bg = (
     spark.read.format("jdbc")
