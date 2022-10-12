@@ -25,3 +25,4 @@
 
 - Assignment 1 located in 'src' folder with the name of 'hw1.py'
 - Assignment 2 located in 'src/hw2' folder with the name of 'hw2.py'
+- Assignment 3 located in 'src/hw3' folder
