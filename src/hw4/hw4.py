@@ -5,30 +5,6 @@ import statsmodels.api
 from plotly import express as px
 from sklearn.ensemble import RandomForestClassifier
 
-# Difference with mean of response along with it's plot (weighted and unweighted)
-# Continuous Predictor
-"""
-d
-
-
-# Random Forest Feature Importance
-def rf_cls(predictor, response):
-    df_X = predictor[column]
-    df_y = response
-    rf_c = RandomForestClassifier(max_depth=2, random_state=0)
-    rf_c.fit(df_X.values.reshape(-1, 1), df_y)
-    imp = rf_c.feature_importances_
-    return print(imp)
-
-def rf_reg(predictor, response):
-    df_X = predictor[column]
-    df_y = response
-    rf_c = RandomForestRegressor(max_depth=2, random_state=0)
-    rf_c.fit(df_X.values.reshape(-1, 1), df_y)
-    imp = rf_c.feature_importances_
-    return print(imp)
-"""
-
 
 def main():
     df = pd.read_csv(
