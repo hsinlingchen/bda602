@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import statsmodels.api
 from plotly import express as px
 from plotly.subplots import make_subplots
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 
 
 def main():
@@ -337,7 +337,7 @@ def main():
     # Random Forest Feature Importance Rank
     df_X = pred[cont_pred_list]
     df_y = resp
-    rf_c = RandomForestClassifier(max_depth=2, random_state=0)
+    rf_c = RandomForestRegressor(max_depth=2, random_state=0)
     rf_c.fit(df_X.values, df_y)
     imp = rf_c.feature_importances_
     print(imp)
