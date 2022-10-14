@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 def main():
+
     df = pd.read_csv(
         "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv"
     ).dropna()
@@ -68,11 +69,68 @@ def main():
             t_list.append(t_val)
             p_val = "NA"
             p_list.append(p_val)
-            # Difference with Mean of Response - still working on the code for cat predictor
-            umwr = " "
-            umwr_list.append(umwr)
-            mwr = " "
-            mwr_list.append(mwr)
+
+            # Difference with Mean of Response - Category
+            predictor = f"{pred[column].name}"
+            response = f"{resp.name}"
+            target = resp.unique()[0]
+            diff_cat_prop = df[resp == target].count() / resp.count()
+            diff_cat_dt = pd.DataFrame()
+            diff_cat_dt["CategoryCounts"] = df.groupby(by=predictor)[response].count()
+            diff_cat_dt["TargetCounts"] = (
+                df[resp == target].groupby(by=predictor)[response].count()
+            )
+            diff_cat_dt["Proportion"] = (
+                diff_cat_dt["TargetCounts"] / diff_cat_dt["CategoryCounts"]
+            )
+            diff_cat_dt["PopProp"] = diff_cat_prop[0]
+            diff_cat_dt["MeanDiff"] = diff_cat_dt["Proportion"] - diff_cat_dt["PopProp"]
+            diff_cat_dt["MeanSquaredDiff"] = diff_cat_dt["MeanDiff"] ** 2
+            diff_cat_dt["WeightedMeanSquaredDiff"] = (
+                diff_cat_dt["Proportion"] * diff_cat_dt["MeanSquaredDiff"]
+            )
+
+            # print(diff_cat_dt)
+
+            n = len(pred[column].unique())
+            uw_msd_sum = diff_cat_dt["MeanSquaredDiff"].sum()
+            w_msd_sum = diff_cat_dt["WeightedMeanSquaredDiff"].sum()
+            uw_msd_avg = uw_msd_sum / n
+            w_msd_avg = w_msd_sum / n
+            print(
+                f"Unweighted Difference of Mean: {uw_msd_avg}\n"
+                f"Weighted Difference of Mean: {w_msd_avg}"
+            )
+            # Plot - still working on fixing plots
+            """
+            trace1 = go.Bar(
+                x=pred[column],
+                y=diff_cat_dt["CategoryCounts"],
+                name="population",
+            )
+
+            trace2 = go.Scatter(
+                x=diff_cat_dt["MeanDiff"],
+                y=pred[column],
+                name="Population Mean",
+            )
+
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(trace1)
+            fig.add_trace(trace2, secondary_y=True)
+            #fig.add_trace(trace3, secondary_y=True)
+            fig["layout"].update(
+                height=600,
+                width=800,
+                title=f"Difference with Mean of Response with Predictor {predictor}",
+            )
+            fig.show()
+            fig_html = f"{predictor}_diff.html"
+            fig.write_html(fig_html)
+            """
+            # Data for Report
+            umwr_list.append(f"{uw_msd_avg} ()")
+            mwr_list.append(w_msd_avg)
         elif float(pred[column].nunique()) / pred[column].count() < 0.05:
             p_type = "boolean"
             print(f"Predictor {column} is {p_type}.")
@@ -96,11 +154,70 @@ def main():
             t_list.append(t_val)
             p_val = "NA"
             p_list.append(p_val)
-            # Difference with Mean of Response - still working on the code for b predictor
-            umwr = " "
-            umwr_list.append(umwr)
-            mwr = " "
-            mwr_list.append(mwr)
+            # Difference with Mean of Response - Boolean
+            predictor = f"{pred[column].name}"
+            response = f"{resp.name}"
+            target = resp.unique()[0]
+            bool_prop = df[resp == target].count() / resp.count()
+            bool_dt = pd.DataFrame()
+            bool_dt["CategoryCounts"] = df.groupby(by=predictor)[response].count()
+            bool_dt["TargetCounts"] = (
+                df[resp == target].groupby(by=predictor)[response].count()
+            )
+            bool_dt["Proportion"] = bool_dt["TargetCounts"] / bool_dt["CategoryCounts"]
+            bool_dt["PopProp"] = bool_prop[0]
+            bool_dt["MeanDiff"] = bool_dt["Proportion"] - bool_dt["PopProp"]
+            bool_dt["MeanSquaredDiff"] = bool_dt["MeanDiff"] ** 2
+            bool_dt["WeightedMeanSquaredDiff"] = (
+                bool_dt["Proportion"] * bool_dt["MeanSquaredDiff"]
+            )
+
+            # print(bool_dt)
+            n = len(pred[column].unique())
+            uw_msd_sum = bool_dt["MeanSquaredDiff"].sum()
+            w_msd_sum = bool_dt["WeightedMeanSquaredDiff"].sum()
+            uw_msd_avg = uw_msd_sum / n
+            w_msd_avg = w_msd_sum / n
+            print(
+                f"Unweighted Difference of Mean: {uw_msd_avg}\n"
+                f"Weighted Difference of Mean: {w_msd_avg}"
+            )
+
+            # Plot - still working on fixing plots
+            """
+            trace1 = go.Bar(
+                x=pred[column],
+                y=diff_cat_dt["CategoryCounts"],
+                name="population",
+            )
+
+            trace2 = go.Scatter(
+                x=diff_cat_dt["MeanDiff"],
+                y=pred[column],
+                name="Population Mean",
+            )
+
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(trace1)
+            fig.add_trace(trace2, secondary_y=True)
+            #fig.add_trace(trace3, secondary_y=True)
+            fig["layout"].update(
+                height=600,
+                width=800,
+                title=f"Difference with Mean of Response with Predictor {predictor}",
+            )
+            fig.show()
+            fig_html = f"{predictor}_diff.html"
+            fig.write_html(fig_html)
+            """
+            # Data for Report
+            umwr_list.append(f"{uw_msd_avg} ()")
+            mwr_list.append(w_msd_avg)
+
+            # Data for Report
+            umwr_list.append(f"{uw_msd_avg} ()")
+            mwr_list.append(w_msd_avg)
+
         else:
             pn = pred[column].name
             p_type = "continuous"
@@ -226,16 +343,6 @@ def main():
     print(imp)
 
     # Table Report
-    """header = [
-        "Response",
-        "Predictor",
-        "Plot",
-        "t-score",
-        "p-score",
-        "RF VarImp",
-        "MWR - Unweighted",
-        "MWR - Weighted",
-    ]"""
     pred_count = len(p_type_list) - 1
     temp_list = list(r_type_list)
     for i in range(pred_count):
@@ -253,8 +360,8 @@ def main():
             "t-value": t_list,
             "p-value": p_list,
             # "RF VarImp" : rf_imp_list #still working on the format
-            "MWR - Unweighted": mwr_list,
-            "MWR - Weighted": umwr_list,
+            "MWR - Unweighted": umwr_list,
+            "MWR - Weighted": mwr_list,
         }
     )
     report_df.to_excel(writer, index=False)
