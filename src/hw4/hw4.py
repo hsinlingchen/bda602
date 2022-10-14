@@ -1,8 +1,10 @@
 import sys
 
 import pandas as pd
+import plotly.graph_objects as go
 import statsmodels.api
 from plotly import express as px
+from plotly.subplots import make_subplots
 from sklearn.ensemble import RandomForestClassifier
 
 
@@ -19,17 +21,28 @@ def main():
     # create a list for continuous predictor for further random forest importance
     cont_pred_list = list()
     # determine if the response is continuous, boolean, or categorical
+    r_type_list = []
+    p_type_list = []
+
     if float(resp.nunique()) / resp.count() < 0.05:
-        print("Response is boolean.")
+        r_type = "boolean"
+        print(f"Response is {r_type}.")
+        r_type_list.append(f"{resp.name} ({r_type})")
     elif resp is str:
-        print("Response is categorical.")
+        r_type = "categorical"
+        print(f"Response is {r_type}.")
+        r_type_list.append(f"{resp.name} ({r_type})")
     else:
-        print("Response is continuous.")
+        r_type = "continuous"
+        print(f"Response is {r_type}.")
+        r_type_list.append(f"{resp.name} ({r_type})")
 
     # determine if the predictors are continuous, boolean, or categorical
     for column in pred:
         if pred[column].dtype.name in ["object", "int64"]:
-            print(f"Predictor {column} is categorical.")
+            p_type = "categorical"
+            print(f"Predictor {column} is {p_type}.")
+            p_type_list.append(f"{column} ({p_type})")
             # plots for boolean response with categorical predictor
             pn = pred[column].name
             rn = resp.name
@@ -38,11 +51,16 @@ def main():
                 df,
                 x=pn,
                 y=rn,
-                title=f"Predictor {pred[column].name} vs. Response {resp.name}",
+                title=f"Predictor {pn} vs. Response {rn}",
             )
             fig_h.show()
+            fig_h.write_html(f"{pn}_heatmap.html")
+
+            # Difference with Mean of Response - still working on the code for cat predictor
         elif float(pred[column].nunique()) / pred[column].count() < 0.05:
-            print(f"Predictor {column} is boolean.")
+            p_type = "boolean"
+            print(f"Predictor {column} is {p_type}.")
+            p_type_list.append(f"{column} ({p_type})")
             # plots for boolean response with boolean predictor
             pn = pred[column].name
             rn = resp.name
@@ -54,10 +72,14 @@ def main():
                 title=f"Predictor {pred[column].name} vs. Response {resp.name}",
             )
             fig_h.show()
+            # Difference with Mean of Response - still working on the code for b predictor
         else:
-            print(f"Predictor {column} is continuous.")
+            p_type = "continuous"
+            print(f"Predictor {column} is {p_type}.")
+            p_type_list.append(f"{column} ({p_type})")
             cont_pred_list.append(pred[column].name)
             # plots for boolean response with continuous predictor
+            # was not able to get distribution plot work, using histogram with run instead
             df_cont = pred[column].values
             fig = px.histogram(
                 df_cont,
@@ -88,10 +110,73 @@ def main():
                 yaxis_title="y",
             )
             fig_lr.show()
-            # Difference Mean of response (Unweighted) ...
 
-            # Difference Mean of response (Weighted) ...
+            # Difference with Mean of Response
+            diff_df = pd.DataFrame()
+            ps = pred[column]
+            pred_name = f"{ps.name}"
+            rs = resp
+            pred_df = ps.to_frame()
+            pred_df[resp] = rs.values
+            pop_mean = rs.mean()
+            n = 10
+            intervals = pd.qcut(ps.rank(method="first"), n)
+            pred_df["LowerBin"] = pd.Series([i.left for i in intervals])
+            pred_df["UpperBin"] = pd.Series([i.right for i in intervals])
+            labels = ["LowerBin", "UpperBin"]
+            diff_df["BinCenters"] = pred_df.groupby(by=labels).median()[pred_name]
+            diff_df["BinCount"] = pred_df.groupby(by=labels).count()[pred_name]
+            diff_df["Weight"] = diff_df["BinCount"] / ps.count()
+            diff_df["BinMean"] = pred_df.groupby(by=labels).mean()[pred_name]
+            diff_df["PopulationMean"] = pop_mean
+            msd = "MeanSquaredDiff"
+            wmsd = "WeightedMeanSquaredDiff"
+            diff_df[msd] = (diff_df["BinMean"] - diff_df["PopulationMean"]) ** 2
+            diff_df[wmsd] = (
+                diff_df["Weight"]
+                * (diff_df["BinMean"] - diff_df["PopulationMean"]) ** 2
+            )
+            diff_df = diff_df.reset_index()
+            uw_msd_sum = diff_df[msd].sum()
+            w_msd_sum = diff_df[wmsd].sum()
+            uw_msd_avg = uw_msd_sum / n
+            w_msd_avg = w_msd_sum / n
+            print(
+                f"Unweighted Difference of Mean: {uw_msd_avg}\n"
+                f"Weighted Difference of Mean: {w_msd_avg}"
+            )
+            # Plot
+            trace1 = go.Bar(
+                x=diff_df["BinCenters"],
+                y=diff_df["BinCount"],
+                name="population",
+            )
 
+            trace2 = go.Scatter(
+                x=diff_df["BinCenters"],
+                y=diff_df["PopulationMean"],
+                name="Population Mean",
+            )
+            diff_df["BinMeanMinusPopulationMean"] = (
+                diff_df["BinMean"] - diff_df["PopulationMean"]
+            )
+            # trace 3 came out weird on the plot, still working on solution
+            trace3 = go.Scatter(
+                x=diff_df["BinCenters"],
+                y=diff_df["BinMeanMinusPopulationMean"],
+                name="Bin Mean Minus Population Mean",
+            )
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(trace1)
+            fig.add_trace(trace2, secondary_y=True)
+            fig.add_trace(trace3, secondary_y=True)
+            fig["layout"].update(
+                height=600,
+                width=800,
+                title=f"Difference with Mean of Response with Predictor {pred_name}",
+            )
+            fig.show()
+    # print(p_type_list)
     # Random Forest Feature Importance Rank
     df_X = pred[cont_pred_list]
     df_y = resp
@@ -100,7 +185,28 @@ def main():
     imp = rf_c.feature_importances_
     print(imp)
 
-    # table report....
+    # Table Report
+    """header = [
+        "Response",
+        "Predictor",
+        "Plot",
+        "t-score",
+        "p-score",
+        "RF VarImp",
+        "MWR - Unweighted",
+        "MWR - Weighted",
+    ]"""
+    pred_count = len(p_type_list)
+    for i in range(pred_count):
+        for element in r_type_list:
+            r_type_list.append(element)
+    print(r_type_list)
+
+    writer = pd.ExcelWriter("report.xlsx", engine="openpyxl")
+    wb = writer.book
+    report_df = pd.DataFrame({"Response": r_type_list, "Predictor": p_type_list})
+    report_df.to_excel(writer, index=False)
+    wb.save("report.xlsx")
 
 
 if __name__ == "__main__":
