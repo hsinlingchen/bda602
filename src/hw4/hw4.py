@@ -27,7 +27,7 @@ def main():
     plot_list = []
     t_list = []
     p_list = []
-    # rf_imp_list = []
+    rf_imp_list = []
     umwr_list = []
     mwr_list = []
 
@@ -349,6 +349,10 @@ def main():
         for element in temp_list:
             r_type_list.append(element)
     # print(r_type_list)
+    # set up RF VarImp Column
+    pred_count_all = len(p_type_list)
+    for i in range(pred_count_all):
+        rf_imp_list.append(" ")
 
     writer = pd.ExcelWriter("report.xlsx", engine="openpyxl")
     wb = writer.book
@@ -359,14 +363,19 @@ def main():
             "Plot": plot_list,
             "t-value": t_list,
             "p-value": p_list,
-            # "RF VarImp" : rf_imp_list #still working on the format
+            "RF VarImp": rf_imp_list,
             "MWR - Unweighted": umwr_list,
             "MWR - Weighted": mwr_list,
         }
     )
+    # for RF VarImp column, still need to work on the code to add value to the correct cell automatically
+    report_df.set_index(["Predictor"])
+    report_df.at[2, "RF VarImp"] = imp[0]
+    report_df.at[5, "RF VarImp"] = imp[1]
+
     report_df.to_excel(writer, index=False)
     wb.save("report.xlsx")
-    # print(report_df)
+    print(report_df)
 
 
 if __name__ == "__main__":
