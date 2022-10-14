@@ -175,9 +175,7 @@ def main():
             uw_msd_sum = diff_df[msd].sum()
             w_msd_sum = diff_df[wmsd].sum()
             uw_msd_avg = uw_msd_sum / n
-            umwr_list.append(uw_msd_avg)
             w_msd_avg = w_msd_sum / n
-            mwr_list.append(w_msd_avg)
             print(
                 f"Unweighted Difference of Mean: {uw_msd_avg}\n"
                 f"Weighted Difference of Mean: {w_msd_avg}"
@@ -213,6 +211,10 @@ def main():
                 title=f"Difference with Mean of Response with Predictor {pred_name}",
             )
             fig.show()
+            fig_html = f"{ps.name}_diff.html"
+            fig.write_html(fig_html)
+            umwr_list.append(f"{uw_msd_avg} ({fig_html})")
+            mwr_list.append(w_msd_avg)
 
     # print(p_type_list)
     # Random Forest Feature Importance Rank
@@ -257,7 +259,7 @@ def main():
     )
     report_df.to_excel(writer, index=False)
     wb.save("report.xlsx")
-    print(report_df)
+    # print(report_df)
 
 
 if __name__ == "__main__":
