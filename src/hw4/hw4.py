@@ -23,6 +23,12 @@ def main():
     # determine if the response is continuous, boolean, or categorical
     r_type_list = []
     p_type_list = []
+    plot_list = []
+    t_list = []
+    p_list = []
+    # rf_imp_list = []
+    umwr_list = []
+    mwr_list = []
 
     if float(resp.nunique()) / resp.count() < 0.05:
         r_type = "boolean"
@@ -54,9 +60,19 @@ def main():
                 title=f"Predictor {pn} vs. Response {rn}",
             )
             fig_h.show()
-            fig_h.write_html(f"{pn}_heatmap.html")
+            fig_html = f"{pn}_heatmap.html"
+            fig_h.write_html(fig_html)
+            plot_list.append(fig_html)
 
+            t_val = "NA"
+            t_list.append(t_val)
+            p_val = "NA"
+            p_list.append(p_val)
             # Difference with Mean of Response - still working on the code for cat predictor
+            umwr = " "
+            umwr_list.append(umwr)
+            mwr = " "
+            mwr_list.append(mwr)
         elif float(pred[column].nunique()) / pred[column].count() < 0.05:
             p_type = "boolean"
             print(f"Predictor {column} is {p_type}.")
@@ -72,8 +88,21 @@ def main():
                 title=f"Predictor {pred[column].name} vs. Response {resp.name}",
             )
             fig_h.show()
+            fig_html = f"{pn}_heatmap.html"
+            fig_h.write_html(fig_html)
+            plot_list.append(fig_html)
+
+            t_val = "NA"
+            t_list.append(t_val)
+            p_val = "NA"
+            p_list.append(p_val)
             # Difference with Mean of Response - still working on the code for b predictor
+            umwr = " "
+            umwr_list.append(umwr)
+            mwr = " "
+            mwr_list.append(mwr)
         else:
+            pn = pred[column].name
             p_type = "continuous"
             print(f"Predictor {column} is {p_type}.")
             p_type_list.append(f"{column} ({p_type})")
@@ -88,6 +117,10 @@ def main():
                 title=f"Predictor {pred[column].name} vs. Response {resp.name}",
             )
             fig.show()
+
+            fig_html = f"{pn}dist.html"
+            fig.write_html(fig_html)
+            plot_list.append(fig_html)
             fig1 = px.violin(
                 df_cont,
                 color=resp,
@@ -102,6 +135,8 @@ def main():
             t_val = round(log_reg_fit.tvalues[1], 6)
             p_val = "{:.6e}".format(log_reg_fit.pvalues[1])
             print(f"t-value: {t_val}\np-value: {p_val}")
+            t_list.append(t_val)
+            p_list.append(p_val)
             # Plot the figure
             fig_lr = px.scatter(x=pred[column], y=resp, trendline="lowess")
             fig_lr.update_layout(
@@ -140,7 +175,9 @@ def main():
             uw_msd_sum = diff_df[msd].sum()
             w_msd_sum = diff_df[wmsd].sum()
             uw_msd_avg = uw_msd_sum / n
+            umwr_list.append(uw_msd_avg)
             w_msd_avg = w_msd_sum / n
+            mwr_list.append(w_msd_avg)
             print(
                 f"Unweighted Difference of Mean: {uw_msd_avg}\n"
                 f"Weighted Difference of Mean: {w_msd_avg}"
@@ -176,6 +213,7 @@ def main():
                 title=f"Difference with Mean of Response with Predictor {pred_name}",
             )
             fig.show()
+
     # print(p_type_list)
     # Random Forest Feature Importance Rank
     df_X = pred[cont_pred_list]
@@ -196,17 +234,30 @@ def main():
         "MWR - Unweighted",
         "MWR - Weighted",
     ]"""
-    pred_count = len(p_type_list)
+    pred_count = len(p_type_list) - 1
+    temp_list = list(r_type_list)
     for i in range(pred_count):
-        for element in r_type_list:
+        for element in temp_list:
             r_type_list.append(element)
-    print(r_type_list)
+    # print(r_type_list)
 
     writer = pd.ExcelWriter("report.xlsx", engine="openpyxl")
     wb = writer.book
-    report_df = pd.DataFrame({"Response": r_type_list, "Predictor": p_type_list})
+    report_df = pd.DataFrame(
+        {
+            "Response": r_type_list,
+            "Predictor": p_type_list,
+            "Plot": plot_list,
+            "t-value": t_list,
+            "p-value": p_list,
+            # "RF VarImp" : rf_imp_list #still working on the format
+            "MWR - Unweighted": mwr_list,
+            "MWR - Weighted": umwr_list,
+        }
+    )
     report_df.to_excel(writer, index=False)
     wb.save("report.xlsx")
+    print(report_df)
 
 
 if __name__ == "__main__":
