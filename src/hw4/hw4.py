@@ -343,7 +343,7 @@ def main():
             # fig.show()
             fig_html = f"{pn}_mwr_plot.html"
             fig.write_html(fig_html)
-            mwr_list.append(fig_html)
+            mwr_list.append(w_msd_avg)
             umwr_list.append(f"{uw_msd_avg} ({fig_html})")
 
     # print(p_type_list)
