@@ -27,3 +27,4 @@
 - Assignment 2 located in 'src/hw2' folder with the name of 'hw2.py'
 - Assignment 3 located in 'src/hw3' folder
 - Assignment 4 located in 'src/hw4' folder
+  - There are still many improvements needed, however, I've tried my best in my ability.

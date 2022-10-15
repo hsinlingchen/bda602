@@ -21,16 +21,20 @@ def main():
     resp = df[resp_col]
     # create a list for continuous predictor for further random forest importance
     cont_pred_list = list()
-    # determine if the response is continuous, boolean, or categorical
+
     r_type_list = []
     p_type_list = []
-    plot_list = []
+    plot_h_list = []
+    plot_hist_list = []
+    plot_v_list = []
+    plot_lr_list = []
     t_list = []
     p_list = []
     rf_imp_list = []
     umwr_list = []
     mwr_list = []
 
+    # determine if the response is continuous, boolean, or categorical
     if float(resp.nunique()) / resp.count() < 0.05:
         r_type = "boolean"
         print(f"Response is {r_type}.")
@@ -60,15 +64,17 @@ def main():
                 y=rn,
                 title=f"Predictor {pn} vs. Response {rn}",
             )
-            fig_h.show()
-            fig_html = f"{pn}_heatmap.html"
+            # fig_h.show()
+            fig_html = f"{pn}_heatmap_plot.html"
             fig_h.write_html(fig_html)
-            plot_list.append(fig_html)
-
+            plot_h_list.append(fig_html)
+            plot_hist_list.append("NA")
+            plot_v_list.append("NA")
             t_val = "NA"
             t_list.append(t_val)
             p_val = "NA"
             p_list.append(p_val)
+            plot_lr_list.append("NA")
 
             # Difference with Mean of Response - Category
             predictor = f"{pred[column].name}"
@@ -145,15 +151,17 @@ def main():
                 y=rn,
                 title=f"Predictor {pred[column].name} vs. Response {resp.name}",
             )
-            fig_h.show()
-            fig_html = f"{pn}_heatmap.html"
+            # fig_h.show()
+            fig_html = f"{pn}_heatmap_plot.html"
             fig_h.write_html(fig_html)
-            plot_list.append(fig_html)
-
+            plot_h_list.append(fig_html)
+            plot_hist_list.append("NA")
+            plot_v_list.append("NA")
             t_val = "NA"
             t_list.append(t_val)
             p_val = "NA"
             p_list.append(p_val)
+            plot_lr_list.append("NA")
             # Difference with Mean of Response - Boolean
             predictor = f"{pred[column].name}"
             response = f"{resp.name}"
@@ -213,11 +221,6 @@ def main():
             # Data for Report
             umwr_list.append(f"{uw_msd_avg} ()")
             mwr_list.append(w_msd_avg)
-
-            # Data for Report
-            umwr_list.append(f"{uw_msd_avg} ()")
-            mwr_list.append(w_msd_avg)
-
         else:
             pn = pred[column].name
             p_type = "continuous"
@@ -233,16 +236,23 @@ def main():
                 marginal="rug",
                 title=f"Predictor {pred[column].name} vs. Response {resp.name}",
             )
-            fig.show()
+            # fig.show()
 
-            fig_html = f"{pn}dist.html"
+            fig_html = f"{pn}_hist_plot.html"
             fig.write_html(fig_html)
-            plot_list.append(fig_html)
+            plot_hist_list.append(fig_html)
+
             fig1 = px.violin(
                 df_cont,
                 color=resp,
             )
-            fig1.show()
+            # fig1.show()
+
+            fig1_html = f"{pn}_violin_plot.html"
+            fig1.write_html(fig1_html)
+            plot_v_list.append(fig1_html)
+            # heatmap not applied
+            plot_h_list.append("NA")
 
             # logistic_regression
             feature_name = pred[column].name
@@ -261,7 +271,10 @@ def main():
                 xaxis_title=f"Variable: {feature_name}",
                 yaxis_title="y",
             )
-            fig_lr.show()
+            # fig_lr.show()
+            fig1_html = f"{pn}_log_reg_plot.html"
+            fig_lr.write_html(fig1_html)
+            plot_lr_list.append(fig1_html)
 
             # Difference with Mean of Response
             diff_df = pd.DataFrame()
@@ -327,11 +340,11 @@ def main():
                 width=800,
                 title=f"Difference with Mean of Response with Predictor {pred_name}",
             )
-            fig.show()
-            fig_html = f"{ps.name}_diff.html"
+            # fig.show()
+            fig_html = f"{pn}_mwr_plot.html"
             fig.write_html(fig_html)
+            mwr_list.append(fig_html)
             umwr_list.append(f"{uw_msd_avg} ({fig_html})")
-            mwr_list.append(w_msd_avg)
 
     # print(p_type_list)
     # Random Forest Feature Importance Rank
@@ -360,9 +373,12 @@ def main():
         {
             "Response": r_type_list,
             "Predictor": p_type_list,
-            "Plot": plot_list,
+            "Heatmap": plot_h_list,
+            "Histogram": plot_hist_list,
+            "Violin": plot_v_list,
             "t-value": t_list,
             "p-value": p_list,
+            "Log Reg Plot": plot_lr_list,
             "RF VarImp": rf_imp_list,
             "MWR - Unweighted": umwr_list,
             "MWR - Weighted": mwr_list,
@@ -375,7 +391,7 @@ def main():
 
     report_df.to_excel(writer, index=False)
     wb.save("report.xlsx")
-    print(report_df)
+    # print(report_df)
 
 
 if __name__ == "__main__":
