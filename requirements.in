@@ -4,7 +4,8 @@ pandas
 plotly
 pyspark
 pyspark-stubs
+scipy
 scikit-learn
 seaborn
 sqlalchemy
-statsmodels.api
+statsmodels

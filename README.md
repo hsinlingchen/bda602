@@ -28,3 +28,5 @@
 - Assignment 3 located in 'src/hw3' folder
 - Assignment 4 located in 'src/hw4' folder
   - There are still many improvements needed, however, I've tried my best in my ability.
+- Midterm located in 'src/midterm' folder
+  - In Assignment 4, I didn't fully understand the "Difference with Mean of Response" concept, updated it in this assignment.
