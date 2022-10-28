@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 
 # Source for stats.binned_statistic: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.binned_statistic.html
 # https://stackoverflow.com/questions/51828828/given-the-scipy-stats-binned-statistic-function-how-to-work-with-diferent-si
-
+# Plot Reference: https://stackoverflow.com/questions/62122015/how-to-add-traces-in-plotly-express
 
 # Continuous
 def con_diff(df, predictor, response):
