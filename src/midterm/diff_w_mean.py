@@ -7,6 +7,10 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder
 
 
+
+# Source for stats.binned_statistic: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.binned_statistic.html
+# https://stackoverflow.com/questions/51828828/given-the-scipy-stats-binned-statistic-function-how-to-work-with-diferent-si
+
 # Continuous
 def con_diff(df, predictor, response):
     mean, edges, bin_number = stats.binned_statistic(
