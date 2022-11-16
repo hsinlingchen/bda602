@@ -30,3 +30,5 @@
   - There are still many improvements needed, however, I've tried my best in my ability.
 - Midterm located in 'src/midterm' folder
   - In Assignment 4, I didn't fully understand the "Difference with Mean of Response" concept, updated it in this assignment.
+- Assignment 5 located in 'src/hw5' folder
+  - Still working on fixing couple mistakes from the midterm project.
