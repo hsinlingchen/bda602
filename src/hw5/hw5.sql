@@ -14,7 +14,7 @@ SELECT game_id,
 FROM boxscore;
 
 
--- Pitching data
+-- Pitching data with Starting Pitcher's Data
 DROP TABLE IF EXISTS pitching_data;
 CREATE TABLE pitching_data
 SELECT P.game_id,
