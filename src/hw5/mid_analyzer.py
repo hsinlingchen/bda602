@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as stats
 import statsmodels.api
-from diff_w_mean import (cat_cat_diff, cat_diff, con_cat_diff, con_con_diff,
-                         con_diff)
+from diff_w_mean import cat_cat_diff, cat_diff, con_cat_diff, con_con_diff, con_diff
 from plot import con_cat_plot, corr_plot, heatmap
 from plotly import express as px
 from sklearn.ensemble import RandomForestRegressor
@@ -172,7 +171,7 @@ def rf_imp(df, predictors, response):
 
 def analyzer(df, pred_cols, resp_col):
     # create variables for html outputs
-    corr_df_html = ""
+    # corr_df_html = ""
     con_con_df_html = ""
     con_con_diff_styler = ""
     full_pred_df_html = ""
@@ -188,8 +187,6 @@ def analyzer(df, pred_cols, resp_col):
 
     # load predictors data sorting types
     predictor_type(df, pred_cols)
-    print(con_pred)
-    print(cat_pred)
 
     # Continuous / Continuous (Linear Regression)
     con_comb_list = list(itertools.combinations(con_pred, r=2))
