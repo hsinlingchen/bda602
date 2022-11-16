@@ -31,5 +31,4 @@
 - Midterm located in 'src/midterm' folder
   - In Assignment 4, I didn't fully understand the "Difference with Mean of Response" concept, updated it in this assignment.
   - The main_midterm.py contains the main function that allows the project to run.
-- Assignment 5 located in 'src/hw5' folder
-  - Still working on fixing couple mistakes from the midterm project.
+
