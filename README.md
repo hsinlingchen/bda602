@@ -32,4 +32,5 @@
   - In Assignment 4, I didn't fully understand the "Difference with Mean of Response" concept, updated it in this assignment.
   - The main_midterm.py contains the main function that allows the project to run.
 - Assignment 5 located in 'src/hw5' folder
+  - Model fitting score results are added to the bottom of the HTML file, and the comments are located at the bottom of the hw5.py.
   - Still working on fixing couple mistakes from the midterm project.

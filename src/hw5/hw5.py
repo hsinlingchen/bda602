@@ -22,8 +22,8 @@ def main():
     port = 3306
     jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
     jdbc_driver = "org.mariadb.jdbc.Driver"
-    sql_query = """SELECT * FROM pitching_data"""
-    pitching_df = (
+    sql_query = """SELECT * FROM model_data"""
+    model_df = (
         spark.read.format("jdbc")
         .option("url", jdbc_url)
         .option("query", sql_query)
@@ -32,20 +32,44 @@ def main():
         .option("driver", jdbc_driver)
         .load()
     )
-    df = pitching_df.toPandas()
+    df = model_df.toPandas()
     df = df.dropna()
-    df = df.astype({"H": "float64", "PIT": "float64"})
+    df[["game_id", "home_team", "away_team", "local_date"]] = df[
+        ["game_id", "home_team", "away_team", "local_date"]
+    ].astype(str)
+    df[["home_AB", "away_AB"]] = df[["home_AB", "away_AB"]].astype(float)
+    df[["home_PA", "home_H", "away_PA", "away_H"]] = df[
+        ["home_PA", "home_H", "away_PA", "away_H"]
+    ].astype(int)
     # print(df.dtypes)
 
     # Predictors
-    pred_cols = ["IP", "H", "GIDP", "HR", "K", "BB", "PIT", "TP", "WHIP", "PFR"]
+    pred_cols = [
+        "home_PA",
+        "home_AB",
+        "home_H",
+        "home_HR",
+        "home_BB",
+        "home_K",
+        "home_TP",
+        "home_Flyout",
+        "home_GIDP",
+        "away_PA",
+        "away_AB",
+        "away_H",
+        "away_HR",
+        "away_BB",
+        "away_K",
+        "away_TP",
+        "away_Flyout",
+        "away_GIDP",
+    ]
     # Response (1 as home team wins, 0 as home team loses)
     resp_col = "HomeTeamWins"
 
-    # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html
-    train, test = train_test_split(df, test_size=0.30, random_state=42)
-    # train = df.iloc[:-1]
-    # test = df.iloc[-1:]
+    # Reference: https://stackoverflow.com/questions/43838052/how-to-get-a-non-shuffled-train-test-split-in-sklearn
+    # Historical Data, first 80% as training data, and last 20% as testing data
+    train, test = train_test_split(df, test_size=0.20, shuffle=False)
 
     train_x, train_y = train[pred_cols], train[resp_col]
     test_x, test_y = test[pred_cols], test[resp_col]
@@ -77,8 +101,8 @@ def main():
     file.close()
 
     # Model Fitting Result:
-    # R^2 scores show that LogisticRegression is the highest among five models,
-    # that it provides the best predictive result of all; even though 53.3% still has lots of room for improvement.
+    # R^2 scores show that QDA is the highest among five models,
+    # that it provides the best predictive result of all; even though 54.67% still has lots of room for improvement.
 
 
 if __name__ == "__main__":
