@@ -2,8 +2,9 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly import express as px
 
+# I was not able to get the distribution plot to work on my laptop (same as HW4),
+# here continues using historgram + rug as substitute.
 
-# I was not able to get the distribution plot to work on my laptop (same as HW4), here continues using historgram + rug as substitute. 
 
 def corr_plot(df, pt):
     fig = px.imshow(df)
