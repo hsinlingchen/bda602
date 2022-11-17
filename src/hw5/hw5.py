@@ -69,7 +69,7 @@ def main():
 
     # Reference: https://stackoverflow.com/questions/43838052/how-to-get-a-non-shuffled-train-test-split-in-sklearn
     # Historical Data, first 80% as training data, and last 20% as testing data
-    train, test = train_test_split(df, test_size=0.20, shuffle=False)
+    train, test = train_test_split(df, test_size=0.20, shuffle=False, random_state=None)
 
     train_x, train_y = train[pred_cols], train[resp_col]
     test_x, test_y = test[pred_cols], test[resp_col]
