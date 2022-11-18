@@ -9,8 +9,7 @@ import pandas as pd
 import scipy.stats as stats
 import statsmodels.api
 from dataset_loader import get_test_data_set
-from diff_w_mean import (cat_cat_diff, cat_diff, con_cat_diff, con_con_diff,
-                         con_diff)
+from diff_w_mean import cat_cat_diff, cat_diff, con_cat_diff, con_con_diff, con_diff
 from plot import con_cat_plot, corr_plot, heatmap
 from plotly import express as px
 from sklearn.ensemble import RandomForestRegressor
@@ -163,14 +162,12 @@ def linear_regression(df, predictor, response):
     return linear_reg_plot
 
 
-""" # Not sure if logistic regression is needed
 def logistic_regression(df, predictor, response):
     pred = statsmodels.api.add_constant(df[predictor])
     log_reg_model_fit = statsmodels.api.OLS(df[response], pred).fit()
     t_value = log_reg_model_fit.tvalues[1]
     p_value = log_reg_model_fit.pvalues[1]
     return p_value, t_value
-"""
 
 
 def rf_imp(df, predictors, response):
@@ -307,13 +304,13 @@ def main():
 
     i = 0
     for pred1 in con_pred:
-        # p_value, t_value = logistic_regression(df, pred1, resp_col)
+        p_value, t_value = logistic_regression(df, pred1, resp_col)
         con_diff_plot, msd, wmsd = con_diff(df, pred1, resp_col)
         con_cat_hist, con_cat_vio = con_cat_plot(df, pred1, resp_col)
         new_row = {
             "Predictor": pred1,
-            # "p-value": p_value,
-            # "t-value": t_value,
+            "p-value": p_value,
+            "t-value": t_value,
             "Random Forest Importance": rf[i],
             "Difference of Mean Response": msd,
             "Weighted Difference of Mean Response": wmsd,

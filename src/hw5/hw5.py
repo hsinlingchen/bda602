@@ -4,13 +4,27 @@ import pandas as pd
 from mid_analyzer import analyzer
 from pyspark.sql import SparkSession
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+
+
+# Random Forest Feature Importance Rank
+def rf_imp_rank(df, pred_cols, resp):
+    df_X = df[pred_cols]
+    df_y = df[resp]
+    rf_c = RandomForestRegressor(max_depth=2, random_state=0)
+    rf_c.fit(df_X.values, df_y)
+    imp = rf_c.feature_importances_
+    imp_list = imp.tolist()
+    data = {"Model/Method": pred_cols, "RF Importance": imp_list}
+    predictive_result = pd.DataFrame(data)
+    rf_imp_html = predictive_result.to_html()
+    return rf_imp_html
 
 
 def main():
@@ -37,7 +51,7 @@ def main():
     df[["game_id", "home_team", "away_team", "local_date"]] = df[
         ["game_id", "home_team", "away_team", "local_date"]
     ].astype(str)
-    df[["home_AB", "away_AB"]] = df[["home_AB", "away_AB"]].astype(float)
+    df[["home_BA", "away_BA"]] = df[["home_BA", "away_BA"]].astype(float)
     df[["home_PA", "home_H", "away_PA", "away_H"]] = df[
         ["home_PA", "home_H", "away_PA", "away_H"]
     ].astype(int)
@@ -46,7 +60,7 @@ def main():
     # Predictors
     pred_cols = [
         "home_PA",
-        "home_AB",
+        "home_BA",
         "home_H",
         "home_HR",
         "home_BB",
@@ -55,7 +69,7 @@ def main():
         "home_Flyout",
         "home_GIDP",
         "away_PA",
-        "away_AB",
+        "away_BA",
         "away_H",
         "away_HR",
         "away_BB",
@@ -94,10 +108,12 @@ def main():
     pr_html = predictive_result.to_html()
     # https://stackoverflow.com/questions/24458163/what-are-the-parameters-for-sklearns-score-function
 
+    rf_imp = rf_imp_rank(df, pred_cols, resp_col)
     # Applying midterm project to the data
     analyzer(df, pred_cols, resp_col)
     file = open("report.html", "a")
     file.write(pr_html)
+    file.write(rf_imp)
     file.close()
 
     # Model Fitting Result:
