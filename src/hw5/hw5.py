@@ -109,7 +109,7 @@ def main():
     # https://stackoverflow.com/questions/24458163/what-are-the-parameters-for-sklearns-score-function
 
     rf_imp = rf_imp_rank(df, pred_cols, resp_col)
-    # Applying midterm project to the data
+    # Applying hw4 and midterm analyzer
     analyzer(df, pred_cols, resp_col)
     file = open("report.html", "a")
     file.write(pr_html)
