@@ -21,7 +21,7 @@ def rf_imp_rank(df, pred_cols, resp):
     rf_c.fit(df_X.values, df_y)
     imp = rf_c.feature_importances_
     imp_list = imp.tolist()
-    data = {"Model/Method": pred_cols, "RF Importance": imp_list}
+    data = {"Predictor": pred_cols, "RF Importance": imp_list}
     predictive_result = pd.DataFrame(data)
     rf_imp_html = predictive_result.to_html()
     return rf_imp_html
