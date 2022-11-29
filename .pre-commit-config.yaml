@@ -9,6 +9,9 @@ repos:
     hooks:
       - id: isort
         name: isort
+        args:
+          - --profile
+          - black
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
     rev: v1.3.0
     hooks:
@@ -21,6 +24,7 @@ repos:
     rev: "v2.7.1" # Use the sha or tag you want to point at
     hooks:
       - id: prettier
+        files: '\.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$'
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.3.0
     hooks:
