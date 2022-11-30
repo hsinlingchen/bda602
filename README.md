@@ -31,4 +31,6 @@
 - Midterm located in 'src/midterm' folder
   - In Assignment 4, I didn't fully understand the "Difference with Mean of Response" concept, updated it in this assignment.
   - The main_midterm.py contains the main function that allows the project to run.
-
+- Assignment 5 located in 'src/hw5' folder
+  - the precommit is fixed with the modifcation to the yaml file.
+- Assignment 6: docker-compose.yml and Dockerfile located in the general folder, and the scripts are in 'src/hw6' folder.
