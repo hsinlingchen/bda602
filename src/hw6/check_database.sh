@@ -1,5 +1,5 @@
 #!/bin/bash
-#sleep 999
+sleep 999
 if ! mariadb -h mariadb -u root -ppassword123  -e "USE baseball;"
 then
     echo "Baseball exists in mariadb."
