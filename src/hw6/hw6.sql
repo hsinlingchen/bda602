@@ -17,7 +17,10 @@ FROM batter_counts bc
 JOIN game g
 ON bc.game_id = g.game_id;
 
-CREATE INDEX batter_game_index ON batter_game (batter, game_id);
+CREATE UNIQUE INDEX batter_game_index ON batter_game (batter, game_id);
+CREATE INDEX bg1_index ON batter_game (batter);
+CREATE INDEX bg2_index ON batter_game (game_id);
+
 
 -- Create table for game id 12560 rolling 100.
 DROP TABLE IF EXISTS rolling_12560;

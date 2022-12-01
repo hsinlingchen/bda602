@@ -1,14 +1,13 @@
 #!/bin/bash
-sleep 100
-if mariadb -uroot -proot --host="mariadb" -e "USE baseball;"
-
+sleep 999
+if ! mariadb -h mdb -u root -ppassword123  -e "USE baseball;"
 then
     echo "Baseball exists in mariadb."
-    mariadb -uroot -proot --host="mariadb" baseball < /src/hw6/hw6.sql
+    mariadb -h mdb -u root -ppassword123 baseball < /src/hw6/hw6.sql
     # write result in a file
-    mariadb -uroot -poot --host="mariadb" baseball -e "SELECT * FROM rolling_12560;" > /src/hw6/rba_results.txt
+    mariadb -h mdb -u root -ppassword123 baseball -e "SELECT * FROM rolling_12560;" > /src/hw6/rba_results.txt
 else
     echo "Baseball does not exist in mariadb."
-    mariadb -uroot -proot --host="mariadb" -e "CREATE DATABASE baseball;"
-    mariadb -uroot -proot --host="mariadb" baseball < /src/baseball.sql
+    mariadb -h mdb -u root -ppassword123 -e "CREATE DATABASE baseball;"
+    mariadb -h mdb -u root -ppassword123 baseball < ./baseball.sql
 fi
