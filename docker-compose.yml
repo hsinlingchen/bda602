@@ -32,6 +32,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./src/:/src/
+      - ./baseball.sql:/app/baseball.sql
     #ports:
     #  - 5307:3307
     networks:
