@@ -1,5 +1,5 @@
 #!/bin/bash
-sleep 99999
+sleep 99
 
 if ! mariadb -h mariadb -u root -ppassword123 -e "USE baseball;"
 then
