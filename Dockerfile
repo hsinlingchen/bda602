@@ -22,8 +22,7 @@ RUN pip3 install --compile --no-cache-dir -r requirements.txt
 
 COPY ./src/hw6/hw6.sql .
 COPY ./src/hw6/check_database.sh .
-COPY ./baseball.sql .
 
-RUN chmod +x ./check_database.sh
+
 CMD ./check_database.sh
 
