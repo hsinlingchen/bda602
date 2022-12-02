@@ -9,6 +9,6 @@ then
 fi
 
 echo "Baseball exists in mariadb."
-mariadb -h mariadb -u root -ppassword123 baseball < /src/hw6/hw6.sql
-# write result in a file
+mariadb -h mariadb -u root -ppassword123 baseball < hw6.sql
 mariadb -h mariadb -u root -ppassword123 baseball -e "SELECT * FROM rolling_12560;" > /src/hw6/rba_results.txt
+echo "Result has been populated."
