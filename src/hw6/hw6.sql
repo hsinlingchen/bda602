@@ -2,7 +2,7 @@
 USE baseball;
 
 -- Fix the column type issue on it, so the id is sorting as integer.
-ALTER TABLE inning MODIFY COLUMN game_id INT UNSIGNED NOT NULL;
+-- ALTER TABLE inning MODIFY COLUMN game_id INT UNSIGNED NOT NULL;
 
 -- Create intermediary table
 DROP TABLE IF EXISTS batter_game;

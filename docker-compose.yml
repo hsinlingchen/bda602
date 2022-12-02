@@ -18,7 +18,9 @@ services:
     #  - 5306:3306
     restart: unless-stopped
     networks:
-      - hw6-network
+      hw6-network:
+        aliases:
+          - mariadb
 
   baseball:
     build:
