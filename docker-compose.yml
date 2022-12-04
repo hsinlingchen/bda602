@@ -1,0 +1,39 @@
+version: "3.3"
+
+networks:
+  hw6-network:
+
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: mariadb
+    environment:
+      - PUID=501
+      - PGID=20
+      - MYSQL_ROOT_PASSWORD=password123
+      - TZ=Europe/London
+    volumes:
+      - ./.db:/config
+    #ports:
+    #  - 5306:3306
+    restart: unless-stopped
+    networks:
+      hw6-network:
+        aliases:
+          - mariadb
+
+  baseball:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: baseball
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    volumes:
+      - ./src/:/src/
+      - ./baseball.sql:/app/baseball.sql
+    #ports:
+    #  - 5307:3307
+    networks:
+      - hw6-network
