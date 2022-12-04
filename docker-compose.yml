@@ -29,7 +29,7 @@ services:
     container_name: baseball
     depends_on:
       - mariadb
-    restart: unless-stopped
+    restart: on-failure
     volumes:
       - ./src/:/src/
       - ./baseball.sql:/app/baseball.sql

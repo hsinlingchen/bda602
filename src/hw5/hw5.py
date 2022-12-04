@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -48,36 +49,70 @@ def main():
     )
     df = model_df.toPandas()
     df = df.dropna()
-    df[["game_id", "home_team", "away_team", "local_date"]] = df[
-        ["game_id", "home_team", "away_team", "local_date"]
-    ].astype(str)
-    df[["home_BA", "away_BA"]] = df[["home_BA", "away_BA"]].astype(float)
-    df[["home_PA", "home_H", "away_PA", "away_H"]] = df[
-        ["home_PA", "home_H", "away_PA", "away_H"]
-    ].astype(int)
     # print(df.dtypes)
+
+    df[["game_id", "local_date", "home_team", "away_team"]] = df[
+        ["game_id", "local_date", "home_team", "away_team"]
+    ].astype(str)
+    df[
+        [
+            "r_home_BA",
+            "r_home_PA",
+            "r_home_H",
+            "r_home_runs",
+            "r_home_errors",
+            "r_away_PA",
+            "r_away_BA",
+            "r_away_H",
+            "r_away_runs",
+            "r_away_errors",
+            "temp",
+        ]
+    ] = df[
+        [
+            "r_home_BA",
+            "r_home_PA",
+            "r_home_H",
+            "r_home_runs",
+            "r_home_errors",
+            "r_away_PA",
+            "r_away_BA",
+            "r_away_H",
+            "r_away_runs",
+            "r_away_errors",
+            "temp",
+        ]
+    ].astype(
+        float
+    )
 
     # Predictors
     pred_cols = [
-        "home_PA",
-        "home_BA",
-        "home_H",
-        "home_HR",
-        "home_BB",
-        "home_K",
-        "home_TP",
-        "home_Flyout",
-        "home_GIDP",
-        "away_PA",
-        "away_BA",
-        "away_H",
-        "away_HR",
-        "away_BB",
-        "away_K",
-        "away_TP",
-        "away_Flyout",
-        "away_GIDP",
+        "r_home_PA",
+        "r_home_BA",
+        "r_home_H",
+        "r_home_HR",
+        "r_home_BB",
+        "r_home_K",
+        "r_home_TP",
+        "r_home_Flyout",
+        "r_home_GIDP",
+        "r_home_runs",
+        "r_home_errors",
+        "r_away_PA",
+        "r_away_BA",
+        "r_away_H",
+        "r_away_HR",
+        "r_away_BB",
+        "r_away_K",
+        "r_away_TP",
+        "r_away_Flyout",
+        "r_away_GIDP",
+        "r_away_runs",
+        "r_away_errors",
+        "temp",
     ]
+
     # Response (1 as home team wins, 0 as home team loses)
     resp_col = "HomeTeamWins"
 
@@ -90,10 +125,11 @@ def main():
 
     model_list = [
         RandomForestClassifier(),
+        LogisticRegression(),
         KNeighborsClassifier(5),
         DecisionTreeClassifier(max_depth=4),
         QuadraticDiscriminantAnalysis(),
-        LogisticRegression(),
+        SVC(),
     ]
 
     model_name = []
