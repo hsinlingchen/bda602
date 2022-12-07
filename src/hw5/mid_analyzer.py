@@ -564,7 +564,7 @@ def analyzer(df, pred_cols, resp_col):
         fig.add_trace(
             go.Scatter(
                 x=edge_centers,
-                y=mean,
+                y=mean_diff,
                 name="Mi - Mpop",
             ),
             secondary_y=True,
@@ -594,6 +594,7 @@ def analyzer(df, pred_cols, resp_col):
             "MWR Plot": fig_mwr_html,
         }
         hw4_df = hw4_df.append(new_row, ignore_index=True)
+        hw4_df.sort_values(by="p-value", ascending=True, inplace=True)
         hw4_styler = hw4_df.style.format(
             {
                 "Histogram": make_clickable,

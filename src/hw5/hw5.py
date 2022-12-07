@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
+# import statsmodels.api as sm
+
 
 # Random Forest Feature Importance Rank
 def rf_imp_rank(df, pred_cols, resp):
@@ -24,6 +26,7 @@ def rf_imp_rank(df, pred_cols, resp):
     imp_list = imp.tolist()
     data = {"Predictor": pred_cols, "RF Importance": imp_list}
     predictive_result = pd.DataFrame(data)
+    predictive_result.sort_values(by="RF Importance", ascending=False, inplace=True)
     rf_imp_html = predictive_result.to_html()
     return rf_imp_html
 
@@ -56,30 +59,100 @@ def main():
     ].astype(str)
     df[
         [
-            "r_home_BA",
             "r_home_PA",
+            "r_home_BA",
             "r_home_H",
+            "r_home_HR",
+            "r_home_HR9",
+            "r_home_BB",
+            "r_home_BB9",
+            "r_home_K",
+            "r_home_K9",
+            "r_home_KBB",
+            "r_home_TP",
+            "r_home_Flyout",
+            "r_home_GIDP",
             "r_home_runs",
             "r_home_errors",
             "r_away_PA",
             "r_away_BA",
             "r_away_H",
+            "r_away_HR",
+            "r_away_HR9",
+            "r_away_BB",
+            "r_away_BB9",
+            "r_away_K",
+            "r_away_K9",
+            "r_away_KBB",
+            "r_away_TP",
+            "r_away_Flyout",
+            "r_away_GIDP",
             "r_away_runs",
             "r_away_errors",
+            "r_diff_PA",
+            "r_diff_BA",
+            "r_diff_H",
+            "r_diff_HR",
+            "r_diff_HR9",
+            "r_diff_BB",
+            "r_diff_BB9",
+            "r_diff_K",
+            "r_diff_K9",
+            "r_diff_KBB",
+            "r_diff_TP",
+            "r_diff_Flyout",
+            "r_diff_GIDP",
+            "r_diff_runs",
+            "r_diff_errors",
             "temp",
         ]
     ] = df[
         [
-            "r_home_BA",
             "r_home_PA",
+            "r_home_BA",
             "r_home_H",
+            "r_home_HR",
+            "r_home_HR9",
+            "r_home_BB",
+            "r_home_BB9",
+            "r_home_K",
+            "r_home_K9",
+            "r_home_KBB",
+            "r_home_TP",
+            "r_home_Flyout",
+            "r_home_GIDP",
             "r_home_runs",
             "r_home_errors",
             "r_away_PA",
             "r_away_BA",
             "r_away_H",
+            "r_away_HR",
+            "r_away_HR9",
+            "r_away_BB",
+            "r_away_BB9",
+            "r_away_K",
+            "r_away_K9",
+            "r_away_KBB",
+            "r_away_TP",
+            "r_away_Flyout",
+            "r_away_GIDP",
             "r_away_runs",
             "r_away_errors",
+            "r_diff_PA",
+            "r_diff_BA",
+            "r_diff_H",
+            "r_diff_HR",
+            "r_diff_HR9",
+            "r_diff_BB",
+            "r_diff_BB9",
+            "r_diff_K",
+            "r_diff_K9",
+            "r_diff_KBB",
+            "r_diff_TP",
+            "r_diff_Flyout",
+            "r_diff_GIDP",
+            "r_diff_runs",
+            "r_diff_errors",
             "temp",
         ]
     ].astype(
@@ -92,8 +165,12 @@ def main():
         "r_home_BA",
         "r_home_H",
         "r_home_HR",
+        "r_home_HR9",
         "r_home_BB",
+        "r_home_BB9",
         "r_home_K",
+        "r_home_K9",
+        "r_home_KBB",
         "r_home_TP",
         "r_home_Flyout",
         "r_home_GIDP",
@@ -103,22 +180,64 @@ def main():
         "r_away_BA",
         "r_away_H",
         "r_away_HR",
+        "r_away_HR9",
         "r_away_BB",
+        "r_away_BB9",
         "r_away_K",
+        "r_away_K9",
+        "r_away_KBB",
         "r_away_TP",
         "r_away_Flyout",
         "r_away_GIDP",
         "r_away_runs",
         "r_away_errors",
+        "r_diff_PA",
+        "r_diff_BA",
+        "r_diff_H",
+        "r_diff_HR",
+        "r_diff_HR9",
+        "r_diff_BB",
+        "r_diff_BB9",
+        "r_diff_K",
+        "r_diff_K9",
+        "r_diff_KBB",
+        "r_diff_TP",
+        "r_diff_Flyout",
+        "r_diff_GIDP",
+        "r_diff_runs",
+        "r_diff_errors",
         "temp",
     ]
 
     # Response (1 as home team wins, 0 as home team loses)
     resp_col = "HomeTeamWins"
 
+    # Reference:
+    # https://regenerativetoday.com/four-popular-feature-selection-methods-for-efficient-machine-learning-in-python/
+    # Feature Selection
+    """
+    X = df.drop(columns=["HomeTeamWins", 'game_id', 'local_date', 'home_team', 'away_team'])
+    y = df["HomeTeamWins"]
+    selected_features = list(X.columns)
+    pmax = 1
+    while (len(selected_features) > 0):
+        p = []
+        X_new = X[selected_features]
+        X_new = sm.add_constant(X_new)
+        model = sm.OLS(y, X_new).fit()
+        p = pd.Series(model.pvalues.values[1:], index=selected_features)
+        pmax = max(p)
+        feature_pmax = p.idxmax()
+        if (pmax > 0.05):
+            selected_features.remove(feature_pmax)
+        else:
+            break
+    print(selected_features)
+    """
+
     # Reference: https://stackoverflow.com/questions/43838052/how-to-get-a-non-shuffled-train-test-split-in-sklearn
-    # Historical Data, first 80% as training data, and last 20% as testing data
-    train, test = train_test_split(df, test_size=0.20, shuffle=False, random_state=None)
+    # Historical Data, first 70% as training data, and last 30% as testing data
+    train, test = train_test_split(df, test_size=0.3, shuffle=False, random_state=None)
 
     train_x, train_y = train[pred_cols], train[resp_col]
     test_x, test_y = test[pred_cols], test[resp_col]
