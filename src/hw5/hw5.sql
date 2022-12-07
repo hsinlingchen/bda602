@@ -214,7 +214,9 @@ ON h1.home_team = h2.home_team
 AND h2.local_date
     BETWEEN DATE_SUB(h1.local_date, INTERVAL 100 DAY)
     AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
-GROUP BY h1.game_id
+    AND h1.home_team = h2.home_team
+    AND h1.away_team = h2.away_team
+GROUP BY h1.game_id, home_team, away_team
 ORDER BY h1.game_id ASC;
 
 
