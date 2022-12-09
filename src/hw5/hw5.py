@@ -13,8 +13,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-# import statsmodels.api as sm
-
 
 # Random Forest Feature Importance Rank
 def rf_imp_rank(df, pred_cols, resp):
@@ -72,8 +70,11 @@ def main():
             "r_home_TP",
             "r_home_Flyout",
             "r_home_GIDP",
+            "r_home_FI",
+            "r_home_FE",
             "r_home_runs",
             "r_home_errors",
+            "home_WP",
             "r_away_PA",
             "r_away_BA",
             "r_away_H",
@@ -87,8 +88,11 @@ def main():
             "r_away_TP",
             "r_away_Flyout",
             "r_away_GIDP",
+            "r_away_FI",
+            "r_away_FE",
             "r_away_runs",
             "r_away_errors",
+            "away_WP",
             "r_diff_PA",
             "r_diff_BA",
             "r_diff_H",
@@ -102,8 +106,11 @@ def main():
             "r_diff_TP",
             "r_diff_Flyout",
             "r_diff_GIDP",
+            "r_diff_FI",
+            "r_diff_FE",
             "r_diff_runs",
             "r_diff_errors",
+            "diff_WP",
             "temp",
         ]
     ] = df[
@@ -121,8 +128,11 @@ def main():
             "r_home_TP",
             "r_home_Flyout",
             "r_home_GIDP",
+            "r_home_FI",
+            "r_home_FE",
             "r_home_runs",
             "r_home_errors",
+            "home_WP",
             "r_away_PA",
             "r_away_BA",
             "r_away_H",
@@ -136,8 +146,11 @@ def main():
             "r_away_TP",
             "r_away_Flyout",
             "r_away_GIDP",
+            "r_away_FI",
+            "r_away_FE",
             "r_away_runs",
             "r_away_errors",
+            "away_WP",
             "r_diff_PA",
             "r_diff_BA",
             "r_diff_H",
@@ -151,8 +164,11 @@ def main():
             "r_diff_TP",
             "r_diff_Flyout",
             "r_diff_GIDP",
+            "r_diff_FI",
+            "r_diff_FE",
             "r_diff_runs",
             "r_diff_errors",
+            "diff_WP",
             "temp",
         ]
     ].astype(
@@ -163,50 +179,59 @@ def main():
     pred_cols = [
         "r_home_PA",
         "r_home_BA",
-        # "r_home_H",
-        # "r_home_HR",
+        "r_home_H",
+        "r_home_HR",
         "r_home_HR9",
-        # "r_home_BB",
+        "r_home_BB",
         "r_home_BB9",
-        # "r_home_K",
+        "r_home_K",
         "r_home_K9",
         "r_home_KBB",
-        # "r_home_TP",
+        "r_home_TP",
         "r_home_Flyout",
         "r_home_GIDP",
+        "r_home_FI",
+        "r_home_FE",
         "r_home_runs",
         "r_home_errors",
+        "home_WP",
         "r_away_PA",
         "r_away_BA",
-        # "r_away_H",
-        # "r_away_HR",
+        "r_away_H",
+        "r_away_HR",
         "r_away_HR9",
-        # "r_away_BB",
+        "r_away_BB",
         "r_away_BB9",
-        # "r_away_K",
+        "r_away_K",
         "r_away_K9",
         "r_away_KBB",
-        # "r_away_TP",
-        # "r_away_Flyout",
+        "r_away_TP",
+        "r_away_Flyout",
         "r_away_GIDP",
+        "r_away_FI",
+        "r_away_FE",
         "r_away_runs",
         "r_away_errors",
+        "away_WP",
         "r_diff_PA",
         "r_diff_BA",
-        # "r_diff_H",
-        # "r_diff_HR",
+        "r_diff_H",
+        "r_diff_HR",
         "r_diff_HR9",
-        # "r_diff_BB",
+        "r_diff_BB",
         "r_diff_BB9",
-        # "r_diff_K",
+        "r_diff_K",
         "r_diff_K9",
         "r_diff_KBB",
         "r_diff_TP",
-        # "r_diff_Flyout",
+        "r_diff_Flyout",
         "r_diff_GIDP",
+        "r_diff_FI",
+        "r_diff_FE",
         "r_diff_runs",
         "r_diff_errors",
-        # "temp",
+        "diff_WP",
+        "temp",
     ]
 
     # Response (1 as home team wins, 0 as home team loses)
@@ -234,13 +259,72 @@ def main():
             break
     print(selected_features)
     """
+    # Reduced Predictor List for Model Building
+    # Predictors
+    reduced_pred_cols = [
+        "r_home_PA",
+        "r_home_BA",
+        "r_home_H",
+        "r_home_HR",
+        "r_home_HR9",
+        "r_home_BB",
+        "r_home_BB9",
+        "r_home_K",
+        "r_home_K9",
+        "r_home_KBB",
+        "r_home_TP",
+        "r_home_Flyout",
+        "r_home_GIDP",
+        "r_home_FI",
+        "r_home_FE",
+        "r_home_runs",
+        "r_home_errors",
+        "home_WP",
+        "r_away_PA",
+        "r_away_BA",
+        "r_away_H",
+        "r_away_HR",
+        "r_away_HR9",
+        "r_away_BB",
+        "r_away_BB9",
+        "r_away_K",
+        "r_away_K9",
+        "r_away_KBB",
+        "r_away_TP",
+        "r_away_Flyout",
+        "r_away_GIDP",
+        "r_away_FI",
+        "r_away_FE",
+        "r_away_runs",
+        "r_away_errors",
+        "away_WP",
+        "r_diff_PA",
+        "r_diff_BA",
+        "r_diff_H",
+        "r_diff_HR",
+        "r_diff_HR9",
+        "r_diff_BB",
+        "r_diff_BB9",
+        "r_diff_K",
+        "r_diff_K9",
+        "r_diff_KBB",
+        "r_diff_TP",
+        "r_diff_Flyout",
+        "r_diff_GIDP",
+        "r_diff_FI",
+        "r_diff_FE",
+        "r_diff_runs",
+        "r_diff_errors",
+        "diff_WP",
+        "temp",
+    ]
 
     # Reference: https://stackoverflow.com/questions/43838052/how-to-get-a-non-shuffled-train-test-split-in-sklearn
     # Historical Data, first 70% as training data, and last 30% as testing data
     train, test = train_test_split(df, test_size=0.3, shuffle=False, random_state=None)
 
-    train_x, train_y = train[pred_cols], train[resp_col]
-    test_x, test_y = test[pred_cols], test[resp_col]
+    train_x, train_y = train[reduced_pred_cols], train[resp_col]
+    test_x, test_y = test[reduced_pred_cols], test[resp_col]
 
     model_list = [
         RandomForestClassifier(),
@@ -261,6 +345,7 @@ def main():
     data = {"Model/Method": model_name, "Score": model_score}
     predictive_result = pd.DataFrame(data)
     pr_html = predictive_result.to_html()
+    print(data)
     # https://stackoverflow.com/questions/24458163/what-are-the-parameters-for-sklearns-score-function
 
     rf_imp = rf_imp_rank(df, pred_cols, resp_col)
@@ -270,10 +355,6 @@ def main():
     file.write(pr_html)
     file.write(rf_imp)
     file.close()
-
-    # Model Fitting Result:
-    # R^2 scores show that QDA is the highest among five models,
-    # that it provides the best predictive result of all; even though 54.67% still has lots of room for improvement.
 
 
 if __name__ == "__main__":

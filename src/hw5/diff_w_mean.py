@@ -32,7 +32,7 @@ def con_diff(df, predictor, response):
     fig.add_trace(
         go.Scatter(
             x=edge_centers,
-            y=mean_diff,
+            y=mean,
             name="Mi - Mpop",
         ),
         secondary_y=False,

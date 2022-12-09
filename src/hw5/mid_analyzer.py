@@ -564,7 +564,7 @@ def analyzer(df, pred_cols, resp_col):
         fig.add_trace(
             go.Scatter(
                 x=edge_centers,
-                y=mean_diff,
+                y=mean,
                 name="Mi - Mpop",
             ),
             secondary_y=True,

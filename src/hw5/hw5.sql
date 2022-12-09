@@ -17,11 +17,11 @@ SELECT game_id,
        away_errors,
        home_runs,
        home_errors,
-       CASE WHEN winner_home_or_away="H" THEN 1 ELSE 0 END AS HomeTeamWins
+       CASE WHEN winner_home_or_away="H" THEN 1 ELSE 0 END AS HomeTeamWins,
+       CASE WHEN winner_home_or_away="A" THEN 1 ELSE 0 END AS HomeTeamLoses
 FROM boxscore;
 
 CREATE INDEX game_info_index ON game_info (game_id);
-
 
 -- Select columns needed from game table
 DROP TABLE IF EXISTS game_date;
@@ -50,16 +50,38 @@ SELECT t.game_id,
        (t.Strikeout / NULLIF(t.Walk,0)) AS home_KBB,
        t.Triple_Play AS home_TP,
        t.Flyout AS home_Flyout,
-       t.Grounded_Into_DP AS home_GIDP
+       t.Grounded_Into_DP AS home_GIDP,
+       t.Fan_interference AS home_FI,
+       t.Field_Error AS home_FE,
+       i.HomeTeamWins
 FROM team_pitching_counts t
 JOIN game_date g
 ON t.game_id = g.game_id
+JOIN game_info i
+ON t.game_id = i.game_id
 WHERE homeTeam = 1;
 
 CREATE UNIQUE INDEX ht_pitching_data_index
 ON ht_pitching_data (game_id, home_team);
 CREATE INDEX ht_id_index ON ht_pitching_data (game_id);
 
+-- Calculate rolling Winning Percentage data
+DROP TABLE IF EXISTS r14_home_WP;
+CREATE TABLE r14_home_WP
+SELECT h1.game_id,
+       h1.local_date,
+       h1.home_team,
+       h1.HomeTeamWins,
+       SUM(h2.HomeTeamWins)/COUNT(h2.game_id) as home_WP
+FROM ht_pitching_data h1
+JOIN ht_pitching_data h2
+ON h1.home_team = h2.home_team
+AND h2.local_date BETWEEN DATE_SUB(h1.local_date, INTERVAL 14 DAY) AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
+GROUP BY h1.game_id, h1.home_team;
+
+CREATE UNIQUE INDEX r14_home_WP_index
+ON r14_home_WP (game_id, home_team);
+CREATE INDEX wp_ht_id_index ON r14_home_WP (game_id);
 
 -- Select columns needed from team_pitching_counts [Away Team]
 DROP TABLE IF EXISTS at_pitching_data;
@@ -79,16 +101,38 @@ SELECT t.game_id,
        (t.Strikeout / NULLIF(t.Walk,0)) AS away_KBB,
        t.Triple_Play AS away_TP,
        t.Flyout AS away_Flyout,
-       t.Grounded_Into_DP AS away_GIDP
+       t.Grounded_Into_DP AS away_GIDP,
+       t.Fan_interference AS away_FI,
+       t.Field_Error AS away_FE,
+       i.HomeTeamLoses
 FROM team_pitching_counts t
 JOIN game_date g
 ON t.game_id = g.game_id
+JOIN game_info i
+ON t.game_id = i.game_id
 WHERE awayTeam = 1;
 
 CREATE UNIQUE INDEX at_pitching_data_index
 ON at_pitching_data (game_id, away_team);
 CREATE INDEX at_id_index ON at_pitching_data (game_id);
 
+-- Calculate rolling Winning Percentage data
+DROP TABLE IF EXISTS r14_away_WP;
+CREATE TABLE r14_away_WP
+SELECT h1.game_id,
+       h1.local_date,
+       h1.away_team,
+       h1.HomeTeamLoses,
+       SUM(h2.HomeTeamLoses)/COUNT(h2.game_id) as away_WP
+FROM at_pitching_data h1
+JOIN at_pitching_data h2
+ON h1.away_team = h2.away_team
+AND h2.local_date BETWEEN DATE_SUB(h1.local_date, INTERVAL 14 DAY) AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
+GROUP BY h1.game_id, h1.away_team;
+
+CREATE UNIQUE INDEX r14_away_WP_index
+ON r14_away_WP (game_id, away_team);
+CREATE INDEX wp_at_id_index ON r14_away_WP (game_id);
 
 -- joint home/away team table
 DROP TABLE IF EXISTS ha_joint;
@@ -110,8 +154,12 @@ SELECT h.game_id,
        h.home_TP,
        h.home_Flyout,
        h.home_GIDP,
+       h.home_FI,
+       h.home_FE,
        i.home_runs,
        i.home_errors,
+       i.HomeTeamWins,
+       i.HomeTeamLoses,
        a.away_PA,
        a.away_BA,
        a.away_H,
@@ -125,8 +173,12 @@ SELECT h.game_id,
        a.away_TP,
        a.away_Flyout,
        a.away_GIDP,
+       a.away_FI,
+       a.away_FE,
        i.away_runs,
        i.away_errors,
+       i.HomeTeamWins AS AwayTeamLoses,
+       i.HomeTeamLoses AS AwayTeamWins,
        (h.home_PA - a.away_PA) AS diff_PA,
        (h.home_BA - a.away_BA) AS diff_BA,
        (h.home_H - a.away_H) AS diff_H,
@@ -140,6 +192,8 @@ SELECT h.game_id,
        (h.home_TP - a.away_TP) AS diff_TP,
        (h.home_Flyout - a.away_Flyout) AS diff_Flyout,
        (h.home_GIDP - a.away_GIDP) AS diff_GIDP,
+       (h.home_FI - a.away_FI) AS diff_FI,
+       (h.home_FE - a.away_FE) AS diff_FE,
        (i.home_runs - i.away_runs) AS diff_runs,
        (i.home_errors - i.away_errors) AS diff_errors
 FROM ht_pitching_data h
@@ -155,7 +209,7 @@ CREATE INDEX ha_id_index ON ha_joint (game_id);
 CREATE INDEX ha_d_index ON ha_joint (local_date);
 
 
--- Rolling 100 for ha_joint
+-- Rolling for ha_joint
 DROP TABLE IF EXISTS rolling_full;
 CREATE TABLE rolling_full
 SELECT h1.game_id,
@@ -176,6 +230,8 @@ SELECT h1.game_id,
        SUM(h2.home_TP) / COUNT(h2.game_id) AS r_home_TP,
        SUM(h2.home_Flyout) / COUNT(h2.game_id) AS r_home_Flyout,
        SUM(h2.home_GIDP) / COUNT(h2.game_id) AS r_home_GIDP,
+       SUM(h2.home_FI) / COUNT(h2.game_id)  AS r_home_FI,
+       SUM(h2.home_FE) / COUNT(h2.game_id)  AS r_home_FE,
        SUM(h2.home_runs) / COUNT(h2.game_id) AS r_home_runs,
        SUM(h2.home_errors) / COUNT(h2.game_id) AS r_home_errors,
        SUM(h2.away_PA) / COUNT(h2.game_id) AS r_away_PA,
@@ -191,6 +247,8 @@ SELECT h1.game_id,
        SUM(h2.away_TP) / COUNT(h2.game_id) AS r_away_TP,
        SUM(h2.away_Flyout) / COUNT(h2.game_id) AS r_away_Flyout,
        SUM(h2.away_GIDP) / COUNT(h2.game_id) AS r_away_GIDP,
+       SUM(h2.away_FI) / COUNT(h2.game_id)  AS r_away_FI,
+       SUM(h2.away_FE) / COUNT(h2.game_id)  AS r_away_FE,
        SUM(h2.away_runs) / COUNT(h2.game_id) AS r_away_runs,
        SUM(h2.away_errors) / COUNT(h2.game_id) AS r_away_errors,
        SUM(h2.diff_PA) / COUNT(h2.game_id) AS r_diff_PA,
@@ -206,17 +264,18 @@ SELECT h1.game_id,
        SUM(h2.diff_TP) / COUNT(h2.game_id) AS r_diff_TP,
        SUM(h2.diff_Flyout) / COUNT(h2.game_id) AS r_diff_Flyout,
        SUM(h2.diff_GIDP) / COUNT(h2.game_id) AS r_diff_GIDP,
+       SUM(h2.diff_FI) / COUNT(h2.game_id)  AS r_diff_FI,
+       SUM(h2.diff_FE) / COUNT(h2.game_id)  AS r_diff_FE,
        SUM(h2.diff_runs) / COUNT(h2.game_id) AS r_diff_runs,
        SUM(h2.diff_errors) / COUNT(h2.game_id) AS r_diff_errors
 FROM ha_joint h1
 JOIN ha_joint h2
 ON h1.home_team = h2.home_team
 AND h2.local_date
-    BETWEEN DATE_SUB(h1.local_date, INTERVAL 100 DAY)
+    BETWEEN DATE_SUB(h1.local_date, INTERVAL 50 DAY)
     AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
-    AND h1.home_team = h2.home_team
-    AND h1.away_team = h2.away_team
-GROUP BY h1.game_id, home_team, away_team
+AND h1.away_team = h2.away_team
+GROUP BY h1.game_id, h1.home_team, h1.away_team
 ORDER BY h1.game_id ASC;
 
 
@@ -244,6 +303,8 @@ SELECT A.game_id,
        A.r_home_TP,
        A.r_home_Flyout,
        A.r_home_GIDP,
+       A.r_home_FI,
+       A.r_home_FE,
        A.r_home_runs,
        A.r_home_errors,
        A.r_away_PA,
@@ -259,6 +320,8 @@ SELECT A.game_id,
        A.r_away_TP,
        A.r_away_Flyout,
        A.r_away_GIDP,
+       A.r_away_FI,
+       A.r_away_FE,
        A.r_away_runs,
        A.r_away_errors,
        A.r_diff_PA,
@@ -274,12 +337,23 @@ SELECT A.game_id,
        A.r_diff_TP,
        A.r_diff_Flyout,
        A.r_diff_GIDP,
+       A.r_diff_FI,
+       A.r_diff_FE,
        A.r_diff_runs,
        A.r_diff_errors,
+       w.home_WP,
+       w1.away_WP,
+       (w.home_WP - w1.away_WP) AS diff_WP,
        R.temp,
        R.HomeTeamWins
 FROM rolling_full A
 JOIN game_info R
 ON A.game_id = R.game_id
+JOIN r14_home_WP w
+ON A.game_id = w.game_id
+JOIN r14_away_WP w1
+ON A.game_id = w1.game_id
 GROUP BY game_id
 ORDER BY A.game_id, A.local_date;
+
+
