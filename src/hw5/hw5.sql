@@ -1,7 +1,6 @@
 -- Command for Mariadb to use baseball database for the queries below.
 USE baseball;
 
-
 -- Fix the column type issue on it, so the id is sorting as integer.
 ALTER TABLE inning MODIFY COLUMN game_id INT UNSIGNED NOT NULL;
 
@@ -32,328 +31,177 @@ FROM game;
 
 CREATE INDEX game_date_index ON game_date (game_id);
 
--- Select columns needed from team_pitching_counts [Home Team]
-DROP TABLE IF EXISTS ht_pitching_data;
-CREATE TABLE ht_pitching_data
+-- Create Table for all pitching
+DROP TABLE IF EXISTS all_pitching;
+CREATE TABLE all_pitching
 SELECT t.game_id,
-       g.local_date,
-       t.team_id AS home_team,
-       t.plateApperance AS home_PA,
-       (t.Hit / t.atBat) AS home_BA,
-       t.Hit AS home_H,
-       t.Home_Run AS home_HR,
-       (t.Home_Run / 9) AS home_HR9,
-       t.Walk AS home_BB,
-       (t.Walk / 9) AS home_BB9,
-       t.Strikeout AS home_K,
-       (t.Strikeout / 9) AS home_K9,
-       (t.Strikeout / NULLIF(t.Walk,0)) AS home_KBB,
-       t.Triple_Play AS home_TP,
-       t.Flyout AS home_Flyout,
-       t.Grounded_Into_DP AS home_GIDP,
-       t.Fan_interference AS home_FI,
-       t.Field_Error AS home_FE,
-       i.HomeTeamWins
-FROM team_pitching_counts t
-JOIN game_date g
-ON t.game_id = g.game_id
-JOIN game_info i
-ON t.game_id = i.game_id
-WHERE homeTeam = 1;
-
-CREATE UNIQUE INDEX ht_pitching_data_index
-ON ht_pitching_data (game_id, home_team);
-CREATE INDEX ht_id_index ON ht_pitching_data (game_id);
-
--- Calculate rolling Winning Percentage data
-DROP TABLE IF EXISTS r14_home_WP;
-CREATE TABLE r14_home_WP
-SELECT h1.game_id,
-       h1.local_date,
-       h1.home_team,
-       h1.HomeTeamWins,
-       SUM(h2.HomeTeamWins)/COUNT(h2.game_id) as home_WP
-FROM ht_pitching_data h1
-JOIN ht_pitching_data h2
-ON h1.home_team = h2.home_team
-AND h2.local_date BETWEEN DATE_SUB(h1.local_date, INTERVAL 14 DAY) AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
-GROUP BY h1.game_id, h1.home_team;
-
-CREATE UNIQUE INDEX r14_home_WP_index
-ON r14_home_WP (game_id, home_team);
-CREATE INDEX wp_ht_id_index ON r14_home_WP (game_id);
-
--- Select columns needed from team_pitching_counts [Away Team]
-DROP TABLE IF EXISTS at_pitching_data;
-CREATE TABLE at_pitching_data
-SELECT t.game_id,
-       g.local_date,
-       t.team_id AS away_team,
-       t.plateApperance AS away_PA,
-       (t.Hit / t.atBat) AS away_BA,
-       t.Hit AS away_H,
-       t.Home_Run AS away_HR,
-       (t.Home_Run / 9) AS away_HR9,
-       t.Walk AS away_BB,
-       (t.Walk / 9) AS away_BB9,
-       t.Strikeout AS away_K,
-       (t.Strikeout / 9) AS away_K9,
-       (t.Strikeout / NULLIF(t.Walk,0)) AS away_KBB,
-       t.Triple_Play AS away_TP,
-       t.Flyout AS away_Flyout,
-       t.Grounded_Into_DP AS away_GIDP,
-       t.Fan_interference AS away_FI,
-       t.Field_Error AS away_FE,
+       d.local_date,
+       t.team_id,
+       t.homeTeam,
+       t.win,
+       t.plateApperance AS PA,
+       t.atBat,
+       t.Hit AS H,
+       t.Hit / NULLIF(t.atBat,0) AS BA,
+       t.Home_Run AS HR,
+       (t.Home_Run / 9) AS HR9,
+       t.Walk AS BB,
+       (t.Walk / 9) AS BB9,
+       t.Strikeout AS K,
+       (t.Strikeout / 9) AS K9,
+       (t.Strikeout / NULLIF(t.Walk,0)) AS KBB,
+       t.Double_Play AS DP,
+       t.Triple_Play AS TP,
+       t.Flyout AS Flyout,
+       t.Grounded_Into_DP AS GIDP,
+       t.Fan_interference AS FI,
+       t.Field_Error AS FE,
+       i.HomeTeamWins,
        i.HomeTeamLoses
 FROM team_pitching_counts t
-JOIN game_date g
-ON t.game_id = g.game_id
+JOIN game_date d
+ON t.game_id = d.game_id
 JOIN game_info i
 ON t.game_id = i.game_id
-WHERE awayTeam = 1;
+GROUP BY t.game_id, t.team_id;
 
-CREATE UNIQUE INDEX at_pitching_data_index
-ON at_pitching_data (game_id, away_team);
-CREATE INDEX at_id_index ON at_pitching_data (game_id);
+CREATE UNIQUE INDEX all_pitching_index
+ON all_pitching (game_id, team_id);
+CREATE INDEX all_pitching_id_index ON all_pitching (game_id);
+CREATE INDEX all_pitching_tid_index ON all_pitching (team_id);
 
--- Calculate rolling Winning Percentage data
-DROP TABLE IF EXISTS r14_away_WP;
-CREATE TABLE r14_away_WP
-SELECT h1.game_id,
-       h1.local_date,
-       h1.away_team,
-       h1.HomeTeamLoses,
-       SUM(h2.HomeTeamLoses)/COUNT(h2.game_id) as away_WP
-FROM at_pitching_data h1
-JOIN at_pitching_data h2
-ON h1.away_team = h2.away_team
-AND h2.local_date BETWEEN DATE_SUB(h1.local_date, INTERVAL 14 DAY) AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
-GROUP BY h1.game_id, h1.away_team;
+-- Rolling Table for all pitching data
+DROP TABLE IF EXISTS r_all_pitching;
+CREATE TABLE r_all_pitching
+SELECT a1.game_id,
+       a1.local_date,
+       a1.team_id,
+       a1.homeTeam,
+       a1.HomeTeamWins,
+       COUNT(a2.game_id) AS num_games,
+       SUM(a2.PA) / COUNT(a2.game_id) AS r_PA,
+       SUM(a2.H) / COUNT(a2.game_id) AS r_H,
+       SUM(a2.BA) / COUNT(a2.game_id) AS r_BA,
+       SUM(a2.HR) / COUNT(a2.game_id) AS r_HR,
+       SUM(a2.HR9) / COUNT(a2.game_id) AS r_HR9,
+       SUM(a2.BB) / COUNT(a2.game_id) AS r_BB,
+       SUM(a2.BB9) / COUNT(a2.game_id) AS r_BB9,
+       SUM(a2.K) / COUNT(a2.game_id) AS r_K,
+       SUM(a2.K9) / COUNT(a2.game_id) AS r_K9,
+       SUM(a2.KBB) / COUNT(a2.game_id) AS r_KBB,
+       SUM(a2.Flyout) / COUNT(a2.game_id) AS r_Flyout,
+       SUM(a2.DP) / COUNT(a2.game_id) AS r_DP,
+       SUM(a2.TP) / COUNT(a2.game_id) AS r_TP,
+       SUM(a2.GIDP) / COUNT(a2.game_id) AS r_GIDP,
+       SUM(a2.FI) / COUNT(a2.game_id) AS r_FI,
+       SUM(a2.FE) / COUNT(a2.game_id) AS r_FE,
+       SUM(a2.win) / COUNT(a2.game_id) AS r_WP
+FROM all_pitching a1
+JOIN all_pitching a2
+ON a1.team_id = a2.team_id
+AND a2.local_date BETWEEN DATE_SUB(a1.local_date, INTERVAL 60 DAY) AND DATE_SUB(a1.local_date, INTERVAL 1 DAY)
+GROUP BY a1.team_id, a1.game_id
+ORDER BY a1.game_id;
 
-CREATE UNIQUE INDEX r14_away_WP_index
-ON r14_away_WP (game_id, away_team);
-CREATE INDEX wp_at_id_index ON r14_away_WP (game_id);
+CREATE UNIQUE INDEX r_all_pitching_index
+ON r_all_pitching (game_id, team_id);
+CREATE INDEX r_all_pitching_id_index ON r_all_pitching (game_id);
+CREATE INDEX r_all_pitching_tid_index ON r_all_pitching (team_id);
 
--- joint home/away team table
-DROP TABLE IF EXISTS ha_joint;
-CREATE TABLE ha_joint
+-- Create table for home team
+DROP TABLE IF EXISTS r_all_home;
+CREATE TABLE r_all_home
+SELECT * FROM r_all_pitching
+WHERE homeTeam = 1;
+
+CREATE UNIQUE INDEX r_all_home_index
+ON r_all_home (game_id, team_id);
+CREATE INDEX r_all_home_id_index ON r_all_home (game_id);
+CREATE INDEX r_all_home_tid_index ON r_all_home (team_id);
+
+-- Create table for away team
+DROP TABLE IF EXISTS r_all_away;
+CREATE TABLE r_all_away
+SELECT * FROM r_all_pitching
+WHERE homeTeam = 0;
+
+CREATE UNIQUE INDEX r_all_away_index
+ON r_all_away (game_id, team_id);
+CREATE INDEX r_all_away_id_index ON r_all_away (game_id);
+CREATE INDEX r_all_away_tid_index ON r_all_away (team_id);
+
+-- Create Table for Model data
+DROP TABLE IF EXISTS model_data;
+CREATE TABLE model_data
 SELECT h.game_id,
        h.local_date,
-       h.home_team,
-       a.away_team,
-       h.home_PA,
-       h.home_BA,
-       h.home_H,
-       h.home_HR,
-       h.home_HR9,
-       h.home_BB,
-       h.home_BB9,
-       h.home_K,
-       h.home_K9,
-       h.home_KBB,
-       h.home_TP,
-       h.home_Flyout,
-       h.home_GIDP,
-       h.home_FI,
-       h.home_FE,
-       i.home_runs,
-       i.home_errors,
-       i.HomeTeamWins,
-       i.HomeTeamLoses,
-       a.away_PA,
-       a.away_BA,
-       a.away_H,
-       a.away_HR,
-       a.away_HR9,
-       a.away_BB,
-       a.away_BB9,
-       a.away_K,
-       a.away_K9,
-       a.away_KBB,
-       a.away_TP,
-       a.away_Flyout,
-       a.away_GIDP,
-       a.away_FI,
-       a.away_FE,
-       i.away_runs,
-       i.away_errors,
-       i.HomeTeamWins AS AwayTeamLoses,
-       i.HomeTeamLoses AS AwayTeamWins,
-       (h.home_PA - a.away_PA) AS diff_PA,
-       (h.home_BA - a.away_BA) AS diff_BA,
-       (h.home_H - a.away_H) AS diff_H,
-       (h.home_HR - a.away_HR) AS diff_HR,
-       (h.home_HR9 - a.away_HR9) AS diff_HR9,
-       (h.home_BB - a.away_BB) AS diff_BB,
-       (h.home_BB9 - a.away_BB9) AS diff_BB9,
-       (h.home_K - a.away_K) AS diff_K,
-       (h.home_K9 - a.away_K9) AS diff_K9,
-       (h.home_KBB - a.away_KBB) AS diff_KBB,
-       (h.home_TP - a.away_TP) AS diff_TP,
-       (h.home_Flyout - a.away_Flyout) AS diff_Flyout,
-       (h.home_GIDP - a.away_GIDP) AS diff_GIDP,
-       (h.home_FI - a.away_FI) AS diff_FI,
-       (h.home_FE - a.away_FE) AS diff_FE,
-       (i.home_runs - i.away_runs) AS diff_runs,
-       (i.home_errors - i.away_errors) AS diff_errors
-FROM ht_pitching_data h
-JOIN at_pitching_data a
+       h.team_id AS home_team,
+       h.HomeTeamWins,
+       h.r_PA AS r_home_PA,
+       h.r_H AS r_home_H,
+       h.r_BA AS r_home_BA,
+       h.r_HR AS r_home_HR,
+       h.r_HR9 AS r_home_HR9,
+       h.r_BB AS r_home_BB,
+       h.r_BB9 AS r_home_BB9,
+       h.r_K AS r_home_K,
+       h.r_K9 AS r_home_K9,
+       h.r_KBB AS r_home_KBB,
+       h.r_Flyout AS r_home_Flyout,
+       h.r_DP AS r_home_DP,
+       h.r_TP AS r_home_TP,
+       h.r_GIDP AS r_home_GIDP,
+       h.r_FI AS r_home_FI,
+       h.r_FE AS r_home_FE,
+       h.r_WP AS r_home_WP,
+       a.team_id AS away_team,
+       a.r_PA AS r_away_PA,
+       a.r_H AS r_away_H,
+       a.r_BA AS r_away_BA,
+       a.r_HR AS r_away_HR,
+       a.r_HR9 AS r_away_HR9,
+       a.r_BB AS r_away_BB,
+       a.r_BB9 AS r_away_BB9,
+       a.r_K AS r_away_K,
+       a.r_K9 AS r_away_K9,
+       a.r_KBB AS r_away_KBB,
+       a.r_Flyout AS r_away_Flyout,
+       a.r_DP AS r_away_DP,
+       a.r_TP AS r_away_TP,
+       a.r_GIDP AS r_away_GIDP,
+       a.r_FI AS r_away_FI,
+       a.r_FE AS r_away_FE,
+       a.r_WP AS r_away_WP,
+       (h.r_PA - a.r_PA) AS r_diff_PA,
+       (h.r_H - a.r_H) AS r_diff_H,
+       (h.r_BA - a.r_BA) AS r_diff_BA,
+       (h.r_HR - a.r_HR) AS r_diff_HR,
+       (h.r_HR9 - a.r_HR9) AS r_diff_HR9,
+       (h.r_BB - a.r_BB) AS r_diff_BB,
+       (h.r_BB9 - a.r_BB9) AS r_diff_BB9,
+       (h.r_K - a.r_K) AS r_diff_K,
+       (h.r_K9 - a.r_K9) AS r_diff_K9,
+       (h.r_KBB - a.r_KBB) AS r_diff_KBB,
+       (h.r_Flyout - a.r_Flyout) AS r_diff_Flyout,
+       (h.r_DP - a.r_DP) AS r_diff_DP,
+       (h.r_TP - a.r_TP) AS r_diff_TP,
+       (h.r_GIDP - a.r_GIDP) AS r_diff_GIDP,
+       (h.r_FI - a.r_FI) AS r_diff_FI,
+       (h.r_FE - a.r_FE) AS r_diff_FE,
+       (h.r_WP - a.r_WP) AS r_diff_WP,
+       i.temp
+FROM r_all_home h
+JOIN r_all_away a
 ON h.game_id = a.game_id
 JOIN game_info i
 ON h.game_id = i.game_id
 GROUP BY h.game_id
-ORDER BY h.game_id, h.home_team, a.away_team ASC;
+ORDER BY h.game_id;
 
 
-CREATE INDEX ha_id_index ON ha_joint (game_id);
-CREATE INDEX ha_d_index ON ha_joint (local_date);
-
-
--- Rolling for ha_joint
-DROP TABLE IF EXISTS rolling_full;
-CREATE TABLE rolling_full
-SELECT h1.game_id,
-       h1.local_date,
-       h1.home_team,
-       h1.away_team,
-       COUNT(h2.game_id) AS num_games,
-       SUM(h2.home_PA) / COUNT(h2.game_id) AS r_home_PA,
-       SUM(h2.home_BA) / COUNT(h2.game_id) AS r_home_BA,
-       SUM(h2.home_H) / COUNT(h2.game_id) AS r_home_H,
-       SUM(h2.home_HR) / COUNT(h2.game_id) AS r_home_HR,
-       SUM(h2.home_HR9) / COUNT(h2.game_id) AS r_home_HR9,
-       SUM(h2.home_BB) / COUNT(h2.game_id) AS r_home_BB,
-       SUM(h2.home_BB9) / COUNT(h2.game_id) AS r_home_BB9,
-       SUM(h2.home_K) / COUNT(h2.game_id) AS r_home_K,
-       SUM(h2.home_K9) / COUNT(h2.game_id) AS r_home_K9,
-       SUM(h2.home_KBB) / COUNT(h2.game_id) AS r_home_KBB,
-       SUM(h2.home_TP) / COUNT(h2.game_id) AS r_home_TP,
-       SUM(h2.home_Flyout) / COUNT(h2.game_id) AS r_home_Flyout,
-       SUM(h2.home_GIDP) / COUNT(h2.game_id) AS r_home_GIDP,
-       SUM(h2.home_FI) / COUNT(h2.game_id)  AS r_home_FI,
-       SUM(h2.home_FE) / COUNT(h2.game_id)  AS r_home_FE,
-       SUM(h2.home_runs) / COUNT(h2.game_id) AS r_home_runs,
-       SUM(h2.home_errors) / COUNT(h2.game_id) AS r_home_errors,
-       SUM(h2.away_PA) / COUNT(h2.game_id) AS r_away_PA,
-       SUM(h2.away_BA) / COUNT(h2.game_id) AS r_away_BA,
-       SUM(h2.away_H) / COUNT(h2.game_id) AS r_away_H,
-       SUM(h2.away_HR) / COUNT(h2.game_id) AS r_away_HR,
-       SUM(h2.away_HR9) / COUNT(h2.game_id) AS r_away_HR9,
-       SUM(h2.away_BB) / COUNT(h2.game_id) AS r_away_BB,
-       SUM(h2.away_BB9) / COUNT(h2.game_id) AS r_away_BB9,
-       SUM(h2.away_K) / COUNT(h2.game_id) AS r_away_K,
-       SUM(h2.away_K9) / COUNT(h2.game_id) AS r_away_K9,
-       SUM(h2.away_KBB) / COUNT(h2.game_id) AS r_away_KBB,
-       SUM(h2.away_TP) / COUNT(h2.game_id) AS r_away_TP,
-       SUM(h2.away_Flyout) / COUNT(h2.game_id) AS r_away_Flyout,
-       SUM(h2.away_GIDP) / COUNT(h2.game_id) AS r_away_GIDP,
-       SUM(h2.away_FI) / COUNT(h2.game_id)  AS r_away_FI,
-       SUM(h2.away_FE) / COUNT(h2.game_id)  AS r_away_FE,
-       SUM(h2.away_runs) / COUNT(h2.game_id) AS r_away_runs,
-       SUM(h2.away_errors) / COUNT(h2.game_id) AS r_away_errors,
-       SUM(h2.diff_PA) / COUNT(h2.game_id) AS r_diff_PA,
-       SUM(h2.diff_BA) / COUNT(h2.game_id) AS r_diff_BA,
-       SUM(h2.diff_H) / COUNT(h2.game_id) AS r_diff_H,
-       SUM(h2.diff_HR) / COUNT(h2.game_id) AS r_diff_HR,
-       SUM(h2.diff_HR9) / COUNT(h2.game_id) AS r_diff_HR9,
-       SUM(h2.diff_BB) / COUNT(h2.game_id) AS r_diff_BB,
-       SUM(h2.diff_BB9) / COUNT(h2.game_id) AS r_diff_BB9,
-       SUM(h2.diff_K) / COUNT(h2.game_id) AS r_diff_K,
-       SUM(h2.diff_K9) / COUNT(h2.game_id) AS r_diff_K9,
-       SUM(h2.diff_KBB) / COUNT(h2.game_id) AS r_diff_KBB,
-       SUM(h2.diff_TP) / COUNT(h2.game_id) AS r_diff_TP,
-       SUM(h2.diff_Flyout) / COUNT(h2.game_id) AS r_diff_Flyout,
-       SUM(h2.diff_GIDP) / COUNT(h2.game_id) AS r_diff_GIDP,
-       SUM(h2.diff_FI) / COUNT(h2.game_id)  AS r_diff_FI,
-       SUM(h2.diff_FE) / COUNT(h2.game_id)  AS r_diff_FE,
-       SUM(h2.diff_runs) / COUNT(h2.game_id) AS r_diff_runs,
-       SUM(h2.diff_errors) / COUNT(h2.game_id) AS r_diff_errors
-FROM ha_joint h1
-JOIN ha_joint h2
-ON h1.home_team = h2.home_team
-AND h2.local_date
-    BETWEEN DATE_SUB(h1.local_date, INTERVAL 50 DAY)
-    AND DATE_SUB(h1.local_date, INTERVAL 1 DAY)
-AND h1.away_team = h2.away_team
-GROUP BY h1.game_id, h1.home_team, h1.away_team
-ORDER BY h1.game_id ASC;
-
-
-CREATE INDEX r_f_id_index ON rolling_full (game_id);
-CREATE INDEX r_f_date_index ON rolling_full (local_date);
-
-
--- Table for model fitting
-DROP TABLE IF EXISTS model_data;
-CREATE TABLE model_data
-SELECT A.game_id,
-       A.local_date,
-       A.home_team,
-       A.away_team,
-       A.r_home_PA,
-       A.r_home_BA,
-       A.r_home_H,
-       A.r_home_HR,
-       A.r_home_HR9,
-       A.r_home_BB,
-       A.r_home_BB9,
-       A.r_home_K,
-       A.r_home_K9,
-       A.r_home_KBB,
-       A.r_home_TP,
-       A.r_home_Flyout,
-       A.r_home_GIDP,
-       A.r_home_FI,
-       A.r_home_FE,
-       A.r_home_runs,
-       A.r_home_errors,
-       A.r_away_PA,
-       A.r_away_BA,
-       A.r_away_H,
-       A.r_away_HR,
-       A.r_away_HR9,
-       A.r_away_BB,
-       A.r_away_BB9,
-       A.r_away_K,
-       A.r_away_K9,
-       A.r_away_KBB,
-       A.r_away_TP,
-       A.r_away_Flyout,
-       A.r_away_GIDP,
-       A.r_away_FI,
-       A.r_away_FE,
-       A.r_away_runs,
-       A.r_away_errors,
-       A.r_diff_PA,
-       A.r_diff_BA,
-       A.r_diff_H,
-       A.r_diff_HR,
-       A.r_diff_HR9,
-       A.r_diff_BB,
-       A.r_diff_BB9,
-       A.r_diff_K,
-       A.r_diff_K9,
-       A.r_diff_KBB,
-       A.r_diff_TP,
-       A.r_diff_Flyout,
-       A.r_diff_GIDP,
-       A.r_diff_FI,
-       A.r_diff_FE,
-       A.r_diff_runs,
-       A.r_diff_errors,
-       w.home_WP,
-       w1.away_WP,
-       (w.home_WP - w1.away_WP) AS diff_WP,
-       R.temp,
-       R.HomeTeamWins
-FROM rolling_full A
-JOIN game_info R
-ON A.game_id = R.game_id
-JOIN r14_home_WP w
-ON A.game_id = w.game_id
-JOIN r14_away_WP w1
-ON A.game_id = w1.game_id
-GROUP BY game_id
-ORDER BY A.game_id, A.local_date;
-
+CREATE UNIQUE INDEX md_index
+ON model_data (game_id, home_team, away_team);
+CREATE INDEX md_id_index ON model_data (game_id);
+CREATE INDEX md_hid_index ON model_data (home_team);
+CREATE INDEX md_aid_index ON model_data (away_team);
 
