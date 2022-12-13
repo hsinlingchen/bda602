@@ -240,7 +240,7 @@ def analyzer(df, pred_cols, resp_col):
         }
         con_con_diff_df = con_con_diff_df.append(new_row, ignore_index=True)
         con_con_diff_df = con_con_diff_df.sort_values(
-            by="Difference of Mean Response", ascending=False
+            by="Weighted Difference of Mean Response", ascending=False
         )
         con_con_diff_styler = con_con_diff_df.style.format(
             {
@@ -358,7 +358,7 @@ def analyzer(df, pred_cols, resp_col):
             }
             con_cat_diff_df = con_cat_diff_df.append(new_row, ignore_index=True)
             con_cat_diff_sort = con_cat_diff_df.sort_values(
-                by=["Difference of Mean Response"], ascending=False
+                by=["Weighted Difference of Mean Response"], ascending=False
             )
             con_cat_diff_html = con_cat_diff_sort.style.format(
                 {
@@ -427,7 +427,7 @@ def analyzer(df, pred_cols, resp_col):
         }
         cat_cat_diff_df = cat_cat_diff_df.append(new_row, ignore_index=True)
         cat_cat_diff_df = cat_cat_diff_df.sort_values(
-            by="Difference of Mean Response", ascending=False
+            by="Weighted Difference of Mean Response", ascending=False
         )
         cat_cat_diff_styler = cat_cat_diff_df.style.format(
             {
