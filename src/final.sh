@@ -10,5 +10,5 @@ fi
 
 echo "Baseball exists in mariadb."
 mariadb -h mariadb -u root -ppassword123 baseball < hw5.sql
-python hw5.py
+python3 hw5.py > report.html
 echo "Result has been populated."

@@ -2,6 +2,7 @@ FROM python:3.9.6
 # --platform-linux/amd64
 ENV APP_HOME /app
 WORKDIR $APP_HOME
+ENV JAVA_HOME="foo"
 ENV PYTHONPATH /
 
 # Get necessary system packages
@@ -28,4 +29,5 @@ COPY ./src/hw5/plot.py .
 COPY ./src/final.sh .
 
 CMD ./final.sh
+CMD ["python3", "hw5.py"]
 

@@ -1,8 +1,8 @@
 import sys
 
 import pandas as pd
+import sqlalchemy
 from mid_analyzer import analyzer
-from pyspark.sql import SparkSession
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import (
     GradientBoostingClassifier,
@@ -10,6 +10,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
 )
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, precision_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -35,26 +36,16 @@ def rf_imp_rank(df, pred_cols, resp):
 
 
 def main():
-    spark = SparkSession.builder.master("local[*]").getOrCreate()
-    user = "root"
-    password = "root"  # pragma: allowlist secret
-    server = "localhost"
-    database = "baseball"
-    port = 3306
-    jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
-    jdbc_driver = "org.mariadb.jdbc.Driver" ""
-    sql_query = """SELECT * FROM model_data"""
-    model_df = (
-        spark.read.format("jdbc")
-        .option("url", jdbc_url)
-        .option("query", sql_query)
-        .option("user", user)
-        .option("password", password)
-        .option("driver", jdbc_driver)
-        .load()
-    )
+    db_user = "root"
+    db_pass = "password123"  # pragma: allowlist secret
+    db_host = "mariadb:3306"
+    db_database = "baseball"
+    connect_string = f"mariadb+mariadbconnector://{db_user}:{db_pass}@{db_host}/{db_database}"  # pragma
+    sql_engine = sqlalchemy.create_engine(connect_string)
+    query = """SELECT * FROM model_data"""
 
-    df = model_df.toPandas()
+    df = pd.read_sql_query(query, sql_engine)
+    # df = model_df.toPandas()
     df = df.dropna()
     # df = df.fillna(0)
     # print(df['game_id'])
@@ -288,7 +279,7 @@ def main():
     # Predictors
     reduced_pred_cols = [
         # "r_home_PA",
-        "r_home_BA",
+        # "r_home_BA",
         # "r_home_H",
         # "r_home_HR",
         # "r_home_HR9",
@@ -296,18 +287,18 @@ def main():
         # "r_home_BB9",
         # "r_home_K",
         # "r_home_K9",
-        "r_home_KBB",
+        # "r_home_KBB",
         # "r_home_DP",
         # "r_home_TP",
         # "r_home_SF",
-        # "r_home_Flyout",
-        "r_home_GIDP",
+        "r_home_Flyout",
+        # "r_home_GIDP",
         # "r_home_FI",
         # "r_home_FE",
         "r_home_WP",
         # "r_away_PA",
         "r_away_BA",
-        # "r_away_H",
+        "r_away_H",
         # "r_away_HR",
         # "r_away_HR9",
         # "r_away_BB",
@@ -315,31 +306,31 @@ def main():
         # "r_away_K",
         # "r_away_K9",
         "r_away_KBB",
-        "r_away_DP",
+        # "r_away_DP",
         # "r_away_TP",
         # "r_away_SF",
         # "r_away_Flyout",
-        "r_away_GIDP",
-        "r_away_FI",
+        # "r_away_GIDP",
+        # "r_away_FI",
         # "r_away_FE",
-        # "r_away_WP",
-        "r_diff_PA",
-        "r_diff_BA",
+        "r_away_WP",
+        # "r_diff_PA",
+        # "r_diff_BA",
         # "r_diff_H",
-        "r_diff_HR",
+        # "r_diff_HR",
         # "r_diff_HR9",
         # "r_diff_BB",
         # "r_diff_BB9",
         "r_diff_K",
         "r_diff_K9",
-        "r_diff_KBB",
+        # "r_diff_KBB",
         # "r_diff_DP",
         # "r_diff_TP",
-        "r_diff_SF",
+        # "r_diff_SF",
         # "r_diff_Flyout",
-        "r_diff_GIDP",
+        # "r_diff_GIDP",
         # "r_diff_FI",
-        # "r_diff_FE",
+        "r_diff_FE",
         "r_diff_WP",
         # "temp",
     ]
@@ -364,15 +355,27 @@ def main():
 
     model_name = []
     model_score = []
+    accu_score = []
+    prec_score = []
+    f1score = []
     for i in model_list:
         model = Pipeline([("scaler", StandardScaler()), ("classifier", i)])
         model.fit(train_x, train_y)
         model_name.append(str(i))
         model_score.append(str(model.score(test_x, test_y)))
-    data = {"Model/Method": model_name, "Score": model_score}
+        pred_y = model.predict(test_x)
+        accu_score.append(str(accuracy_score(test_y, pred_y)))
+        prec_score.append(str(precision_score(test_y, pred_y)))
+        f1score.append(str(f1_score(test_y, pred_y)))
+    data = {
+        "Model/Method": model_name,
+        "Score": model_score,
+        "Accuracy Score": accu_score,
+        "Precision Score": prec_score,
+        "F1 Score": f1score,
+    }
     predictive_result = pd.DataFrame(data)
     pr_html = predictive_result.to_html()
-    print(data)
 
     # https://stackoverflow.com/questions/24458163/what-are-the-parameters-for-sklearns-score-function
 
@@ -384,38 +387,8 @@ def main():
     file.write(rf_imp)
     file.close()
 
-    """
-        # Feature Selection
-        clf_rf_2 = LogisticRegression()
-        rfe = RFE(estimator=clf_rf_2, n_features_to_select=15, step=1)
-        rfe = rfe.fit(train_x, train_y)
-        #clf_rf_3 = KNeighborsClassifier()
-        #rfe1 = RFE(estimator=clf_rf_3, n_features_to_select=15, step=1)
-        #rfe1 = rfe1.fit(train_x, train_y)
-        #print('KNN Chosen best 5 feature by rfe:', train_x.columns[rfe1.support_])
-        clf_rf_4 = DecisionTreeClassifier(max_depth=4)
-        rfe2 = RFE(estimator=clf_rf_4, n_features_to_select=15, step=1)
-        rfe2 = rfe2.fit(train_x, train_y)
-        #clf_rf_5 = QuadraticDiscriminantAnalysis()
-        #rfe3 = RFE(estimator=clf_rf_5, n_features_to_select=15, step=1)
-        #rfe3 = rfe3.fit(train_x, train_y)
-        #clf_rf_6 = SVC()
-        #rfe4 = RFE(estimator=clf_rf_6, n_features_to_select=15, step=1)
-        #rfe4 = rfe4.fit(train_x, train_y)
-        #clf_rf_7 = GaussianNB()
-        #rfe5 = RFE(estimator=clf_rf_7, n_features_to_select=15, step=1)
-        #rfe5 = rfe5.fit(train_x, train_y)
-        clf_rf_8 = GradientBoostingClassifier()
-        rfe6 = RFE(estimator=clf_rf_8, n_features_to_select=15, step=1)
-        rfe6 = rfe6.fit(train_x, train_y)
-
-        print('LG Chosen best 5 feature by rfe:', train_x.columns[rfe.support_])
-        print('DT Chosen best 5 feature by rfe:', train_x.columns[rfe2.support_])
-        #print('QDA Chosen best 5 feature by rfe:', train_x.columns[rfe3.support_])
-        #print('SVC Chosen best 5 feature by rfe:', train_x.columns[rfe4.support_])
-        #print('NB Chosen best 5 feature by rfe:', train_x.columns[rfe5.support_])
-        print('GB Chosen best 5 feature by rfe:', train_x.columns[rfe6.support_])
-    """
+    # Print the best scores
+    print(data)
 
 
 if __name__ == "__main__":
