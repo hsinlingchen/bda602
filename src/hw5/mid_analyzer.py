@@ -186,7 +186,7 @@ def analyzer(df, pred_cols, resp_col):
     out_dir_exist = os.path.exists("output")
     if out_dir_exist is False:
         os.makedirs("output")
-
+    print(os.getcwd())
     # load predictors data sorting types
     predictor_type(df, pred_cols)
 

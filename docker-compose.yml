@@ -35,6 +35,8 @@ services:
     volumes:
       - ./src/:/src/
       - ./baseball.sql:/app/baseball.sql
+      - ./src/hw5/:/src/hw5
+      - ./src/hw5/output/:/src/hw5/output
     #ports:
     #  - 5307:3307
     networks:
