@@ -36,3 +36,4 @@
 - Assignment 6: docker-compose.yml and Dockerfile located in the general folder, and the scripts are in 'src/hw6' folder.
 - Final project is using the hw5.sql and hw5.py files to generate report
   - the report includes hw4 and mideterm analyzer for all predictor, but the model score are reflecting the best score only.
+  - the report will be generated in 'src/hw5' folder, and the plots will be generated in 'src/hw5/output' folder

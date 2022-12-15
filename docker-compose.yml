@@ -33,10 +33,9 @@ services:
       MYSQL_HOST: mariadb
     restart: on-failure
     volumes:
-      - ./src/:/src/
       - ./baseball.sql:/app/baseball.sql
-      - ./src/hw5/:/src/hw5
-      - ./src/hw5/output/:/src/hw5/output
+      - ./src/hw5/:/app/
+      - ./src/hw5/output/:/app/output/
     #ports:
     #  - 5307:3307
     networks:
