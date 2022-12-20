@@ -19,10 +19,13 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip3 install --compile --no-cache-dir -r requirements.txt
 
+COPY ./src/hw5/hw5.sql .
+COPY ./src/hw5/hw5.py .
+COPY ./src/hw5/mid_analyzer.py .
+COPY ./src/hw5/diff_w_mean.py .
+COPY ./src/hw5/plot.py .
+COPY ./src/hw5/final.sh .
 
-COPY ./src/hw6/hw6.sql .
-COPY ./src/hw6/check_database.sh .
-
-
-CMD ./check_database.sh
+CMD ./final.sh
+CMD ["python3", "hw5.py"]
 

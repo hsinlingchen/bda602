@@ -186,7 +186,7 @@ def analyzer(df, pred_cols, resp_col):
     out_dir_exist = os.path.exists("output")
     if out_dir_exist is False:
         os.makedirs("output")
-
+    print(os.getcwd())
     # load predictors data sorting types
     predictor_type(df, pred_cols)
 
@@ -240,7 +240,7 @@ def analyzer(df, pred_cols, resp_col):
         }
         con_con_diff_df = con_con_diff_df.append(new_row, ignore_index=True)
         con_con_diff_df = con_con_diff_df.sort_values(
-            by="Difference of Mean Response", ascending=False
+            by="Weighted Difference of Mean Response", ascending=False
         )
         con_con_diff_styler = con_con_diff_df.style.format(
             {
@@ -358,7 +358,7 @@ def analyzer(df, pred_cols, resp_col):
             }
             con_cat_diff_df = con_cat_diff_df.append(new_row, ignore_index=True)
             con_cat_diff_sort = con_cat_diff_df.sort_values(
-                by=["Difference of Mean Response"], ascending=False
+                by=["Weighted Difference of Mean Response"], ascending=False
             )
             con_cat_diff_html = con_cat_diff_sort.style.format(
                 {
@@ -427,7 +427,7 @@ def analyzer(df, pred_cols, resp_col):
         }
         cat_cat_diff_df = cat_cat_diff_df.append(new_row, ignore_index=True)
         cat_cat_diff_df = cat_cat_diff_df.sort_values(
-            by="Difference of Mean Response", ascending=False
+            by="Weighted Difference of Mean Response", ascending=False
         )
         cat_cat_diff_styler = cat_cat_diff_df.style.format(
             {
@@ -526,7 +526,8 @@ def analyzer(df, pred_cols, resp_col):
         log_reg = statsmodels.api.Logit(resp.values, p)
         log_reg_fit = log_reg.fit()
         t_val = round(log_reg_fit.tvalues[1], 6)
-        p_val = "{:.6e}".format(log_reg_fit.pvalues[1])
+        # p_val = "{:.6e}".format(log_reg_fit.pvalues[1])
+        p_val = log_reg_fit.pvalues[1]
         # Plot the figure
         fig_lr = px.scatter(x=pred[column], y=resp, trendline="lowess")
         fig_lr.update_layout(
@@ -540,65 +541,43 @@ def analyzer(df, pred_cols, resp_col):
         # plot_lr_list.append(fig1_html)
 
         # Difference with Mean of Response
-        diff_df = pd.DataFrame()
-        ps = pred[column]
-        pred_name = f"{ps.name}"
-        rs = resp
-        pred_df = ps.to_frame()
-        pred_df[resp] = rs.values
-        pop_mean = rs.mean()
-        n = 10
-        intervals = pd.qcut(ps.rank(method="first"), n)
-        pred_df["LowerBin"] = pd.Series([i.left for i in intervals])
-        pred_df["UpperBin"] = pd.Series([i.right for i in intervals])
-        labels = ["LowerBin", "UpperBin"]
-        diff_df["BinCenters"] = pred_df.groupby(by=labels).median()[pred_name]
-        diff_df["BinCount"] = pred_df.groupby(by=labels).count()[pred_name]
-        diff_df["Weight"] = diff_df["BinCount"] / ps.count()
-        diff_df["BinMean"] = pred_df.groupby(by=labels).mean()[pred_name]
-        diff_df["PopulationMean"] = pop_mean
-        msd = "MeanSquaredDiff"
-        wmsd = "WeightedMeanSquaredDiff"
-        diff_df[msd] = (diff_df["BinMean"] - diff_df["PopulationMean"]) ** 2
-        diff_df[wmsd] = (
-            diff_df["Weight"] * (diff_df["BinMean"] - diff_df["PopulationMean"]) ** 2
+        mean, edges, bin_number = stats.binned_statistic(
+            df[column], df[resp_col], statistic="mean", bins=10
         )
-        diff_df = diff_df.reset_index()
-        uw_msd_sum = diff_df[msd].sum()
-        w_msd_sum = diff_df[wmsd].sum()
-        uw_msd_avg = uw_msd_sum / n
-        w_msd_avg = w_msd_sum / n
-        # Plot
-        trace1 = go.Bar(
-            x=diff_df["BinCenters"],
-            y=diff_df["BinCount"],
-            name="population",
+        count, edges, bin_number = stats.binned_statistic(
+            df[column], df[resp_col], statistic="count", bins=10
+        )
+        pop_mean = np.mean(df[resp_col])
+        edge_centers = (edges[:-1] + edges[1:]) / 2
+        mean_diff = mean - pop_mean
+        mdsq = mean_diff**2
+        pop_prop = count / len(df[resp_col])
+        wmdsq = pop_prop * mdsq
+        msd = np.nansum(mdsq) / 10
+        wmsd = np.nansum(wmdsq) / 10
+        pop_mean_list = [pop_mean] * 10
+
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig.add_trace(
+            go.Bar(x=edge_centers, y=count, name="Population"), secondary_y=False
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=edge_centers,
+                y=mean,
+                name="Mi - Mpop",
+            ),
+            secondary_y=True,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=edge_centers,
+                y=pop_mean_list,
+                name="Mpop",
+            ),
+            secondary_y=True,
         )
 
-        trace2 = go.Scatter(
-            x=diff_df["BinCenters"],
-            y=diff_df["PopulationMean"],
-            name="Population Mean",
-        )
-        diff_df["BinMeanMinusPopulationMean"] = (
-            diff_df["BinMean"] - diff_df["PopulationMean"]
-        )
-        # trace 3 came out weird on the plot, still working on solution
-        trace3 = go.Scatter(
-            x=diff_df["BinCenters"],
-            y=diff_df["BinMeanMinusPopulationMean"],
-            name="Bin Mean Minus Population Mean",
-        )
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        fig.add_trace(trace1)
-        fig.add_trace(trace2, secondary_y=True)
-        fig.add_trace(trace3, secondary_y=True)
-        fig["layout"].update(
-            height=600,
-            width=800,
-            title=f"Difference with Mean of Response with Predictor {pred_name}",
-        )
-        # fig.show()
         fig_mwr_html = "output/" + f"{pn}_mwr_plot.html"
         fig.write_html(fig_mwr_html)
 
@@ -610,11 +589,12 @@ def analyzer(df, pred_cols, resp_col):
             "t-value": t_val,
             "p-value": p_val,
             "Log Reg Plot": fig_log_html,
-            "MWR - Unweighted": uw_msd_avg,
-            "MWR - Weighted": w_msd_avg,
+            "MWR - Unweighted": msd,
+            "MWR - Weighted": wmsd,
             "MWR Plot": fig_mwr_html,
         }
         hw4_df = hw4_df.append(new_row, ignore_index=True)
+        hw4_df.sort_values(by="p-value", ascending=True, inplace=True)
         hw4_styler = hw4_df.style.format(
             {
                 "Histogram": make_clickable,
